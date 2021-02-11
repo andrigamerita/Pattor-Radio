@@ -2,11 +2,10 @@
 
 # -
 # | Pattor Radio
-# | PiFM-powered pirate radio
-# | on the Raspberry Pi, with goodies
+# | Goodies-packed pirate radio station on Linux
 # |
 # | Copyright (C) 2021, OctoSpacc
-# | Licensed under the GPLv3
+# | Licensed under the AGPLv3
 # -
 
 import json
