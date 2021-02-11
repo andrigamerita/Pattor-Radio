@@ -17,6 +17,8 @@ from time import sleep
 from Include.tinytag import TinyTag
 #from mutagen.mp3 import MP3
 
+AudioFileExtensions = (".mp3", ".oga", ".ogg", ".opus", ".wav", ".flac")
+
 PlayedSongs = []
 UserConfig, PiFMConfig = {}, {}
 
@@ -40,6 +42,7 @@ def LoadFile(FilePath, FileMode):
 
 	return None
 
+# Loading a JSON string from file
 def LoadJSON(FilePath):
 	File = LoadFile(FilePath, "r")
 
@@ -50,6 +53,7 @@ def LoadJSON(FilePath):
 
 	return None
 
+# Loading the program configuration files
 def LoadConfig():
 	global UserConfig, PiFMConfig
 
@@ -88,8 +92,8 @@ def ScanMusic(MusicFolder):
 # Cleaning files with unrecognized audio extension out of the songs list.
 def CleanSongList(SongList):
 	for AudioFile in SongList:
-		if not AudioFile.endswith(tuple(UserConfig["Music file extensions"])):
-			SongList.pop(AudioFile)
+		if not AudioFile.endswith(AudioFileExtensions):
+			SongList.pop(SongList.index(AudioFile))
 
 	return SongList
 
@@ -112,15 +116,33 @@ def LoadSongList():
 		return SaveSongList()
 """
 
-# Getting duration of an audio file in seconds.
-def GetAudioDuration(AudioFilePath):
-	return TinyTag.get(AudioFilePath).duration
-"""
-	if AudioFile.endswith(".mp3"):
-		return MP3(AudioFile).info.length
+# Getting meaningful information from an audio file
+def GetAudioInfo(FilePath, Info):
+	AudioFile = TinyTag.get(FilePath)
+
+	if Info == "Album":
+		return AudioFile.album
+	elif Info == "Artist":
+		return AudioFile.artist
+	elif Info == "Duration":
+		return AudioFile.duration
+	elif Info == "Title":
+		if AudioFile.title == "":
+			return path.basename(FilePath)
+		else:
+			return AudioFile.title
+
+# Read file extension of audio file, to let SoX know what type the file is
+def SoXFileType(FilePath):
+	if FilePath.endswith(AudioFileExtensions):
+		return FilePath[-3:]
+
+# Setting the Radio Text based on user preferences
+def PiFMRadioText(SongInfo):
+	if PiFMConfig["Radio Text from song info"] == ["Title"]:
+		return SongInfo["Title"]
 	else:
-		return None
-"""
+		return PiFMConfig["Static Radio Text"]
 
 def main():
 	LoadConfig()
@@ -134,21 +156,22 @@ def main():
 			CurrentSongIndex = RandomSong(len(SongList))
 
 		CurrentSong = SongList[CurrentSongIndex]
-		CurrentSongDuration = GetAudioDuration(CurrentSong)
+		CurrentSongInfo = {"Duration":GetAudioInfo(CurrentSong,"Duration"), "Title":GetAudioInfo(CurrentSong, "Title")}
 
 		print(
-			"Now playing: " + CurrentSong +
-			" (" + str(int(CurrentSongDuration)) + "s).\n"
+			"Now playing: " + CurrentSongInfo["Title"] +
+			" (" + str(int(CurrentSongInfo["Duration"])) + "s).\n"
 		)
 
 		system(
-			"sudo sox -t mp3 \"" + CurrentSong + "\"" +
+			"sudo sox -t " + SoXFileType(CurrentSong) +
+			" \"" + CurrentSong + "\"" +
 			" -t wav - | sudo " + UserConfig["Path to PiFM executable"] +
 			" --audio -" +
 			" --freq " + PiFMConfig["Frequency"] +
 			" --pi " + PiFMConfig["PI-Code"] +
 			" --ps " + PiFMConfig["Program Service Name"] +
-			" --rt \"" + PiFMConfig["Radio Text"] + "\"" +
+			" --rt \"" + PiFMRadioText(CurrentSongInfo) + "\"" +
 			" --pty " + PiFMConfig["Program Type"] +
 			" --mpx " + PiFMConfig["Output MPX Power"] +
 			" --power " + PiFMConfig["GPIO Power"] +
@@ -156,7 +179,7 @@ def main():
 			" &"
 		)
 
-		sleep(CurrentSongDuration)
+		sleep(CurrentSongInfo["Duration"])
 		system("sudo pkill pifm")
 
 		print("")
