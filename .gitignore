@@ -1,2 +1,3 @@
-Music/
-Data/
+Music/*
+Data/*
+*/__pycache__/
