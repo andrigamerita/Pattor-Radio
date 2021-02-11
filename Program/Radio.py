@@ -9,6 +9,7 @@
 # | Licensed under the GPLv3
 # -
 
+import json
 from os import walk, path, system
 from random import randint
 from sys import argv
@@ -16,30 +17,7 @@ from time import sleep
 from mutagen.mp3 import MP3
 
 PlayedSongs = []
-
-UserConfig = {
-	"Music file extensions": (".mp3"),
-	"Music folder": "Music",
-	"Path to PiFM executable": "/home/pi/PiFM/src/pifm",
-	"Song replay chance": 5
-}
-
-PiFMConfig = {
-	"Alternative Frequencies": [],
-	"Cutoff Frequency": "",
-	"Frequency": "108.0",
-	"Frequency Deviation": "",
-	"GPIO Pin": "",
-	"GPIO Power": "7",
-	"Oscillator Errors": "",
-	"Output MPX Power": "40",
-	"PI-Code": "1055",
-	"Preemph": "eu",
-	"Program Service Name": "PTTRADIO",
-	"Program Type": "15",
-	"Radio Text": "Pattor private 0.08W Radio",
-	"Traffic information carried": ""
-}
+UserConfig, PiFMConfig = {}, {}
 
 """
 # Semi-custom random number generation to deal with the fact that python random.randint is bad.
@@ -48,6 +26,39 @@ def RandomInt(Min, Max):
 	return int(randint(Min*Factor, Max*Factor)/Factor)
 """
 
+# File loading with custom error handling
+def LoadFile(FilePath, FileMode):
+	if path.isfile(FilePath):
+		try:
+			File = open(FilePath, FileMode)
+			return File
+		except:
+			print("[E] Unknown error loading file: " + FilePath + ".")
+	else:
+		print("[E] Error loading file: " + FilePath + " does not exist.")
+
+	return None
+
+def LoadJSON(FilePath):
+	File = LoadFile(FilePath, "r")
+
+	if File != None:
+		JSON = json.load(File)
+		File.close()
+		return JSON
+
+	return None
+
+def LoadConfig():
+	global UserConfig, PiFMConfig
+
+	UserConfig = LoadJSON("Config/User.config")
+	PiFMConfig = LoadJSON("Config/PiFM.config")
+
+	if UserConfig == None or PiFMConfig == None:
+		print("[E] Error loading configuration files. The program will exit.")
+		exit()
+
 # Function to make sure a song would be replayed accordingly to the user-set replay chance
 def RandomSong(TotalSongs):
 	global PlayedSongs
@@ -55,8 +66,8 @@ def RandomSong(TotalSongs):
 	SongIndex = randint(0, TotalSongs-1)
 
 	if SongIndex in PlayedSongs:
-		if PlayedSongs.index(SongIndex) < TotalSongs-((TotalSongs/100)*UserConfig["Song replay chance"]):
-			SongIndex = RandomSong(TotalSongs)
+		if PlayedSongs.index(SongIndex) < int(TotalSongs-((TotalSongs/100)*UserConfig["Song replay chance"]))-1:
+			return None
 		else:
 			PlayedSongs.insert(0, PlayedSongs.pop(SongIndex))
 	else:
@@ -76,7 +87,7 @@ def ScanMusic(MusicFolder):
 # Cleaning files with unrecognized audio extension out of the songs list.
 def CleanSongList(SongList):
 	for AudioFile in SongList:
-		if not AudioFile.endswith(UserConfig["Music file extensions"]):
+		if not AudioFile.endswith(tuple(UserConfig["Music file extensions"])):
 			SongList.pop(AudioFile)
 
 	return SongList
@@ -108,12 +119,17 @@ def GetAudioDuration(AudioFile):
 		return None
 
 def main():
+	LoadConfig()
 	SongList = CleanSongList(ScanMusic(UserConfig["Music folder"]))
 
 	RadioLooping = True
 
 	while RadioLooping:
-		CurrentSong = RandomSong(len(SongList))
+		CurrentSongIndex = None
+		while CurrentSongIndex == None:
+			CurrentSongIndex = RandomSong(len(SongList))
+
+		CurrentSong = SongList[CurrentSongIndex]
 		CurrentSongDuration = GetAudioDuration(CurrentSong)
 
 		print(
