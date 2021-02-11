@@ -14,7 +14,8 @@ from os import walk, path, system
 from random import randint
 from sys import argv
 from time import sleep
-from mutagen.mp3 import MP3
+from Include.tinytag import TinyTag
+#from mutagen.mp3 import MP3
 
 PlayedSongs = []
 UserConfig, PiFMConfig = {}, {}
@@ -112,11 +113,14 @@ def LoadSongList():
 """
 
 # Getting duration of an audio file in seconds.
-def GetAudioDuration(AudioFile):
+def GetAudioDuration(AudioFilePath):
+	return TinyTag.get(AudioFilePath).duration
+"""
 	if AudioFile.endswith(".mp3"):
 		return MP3(AudioFile).info.length
 	else:
 		return None
+"""
 
 def main():
 	LoadConfig()

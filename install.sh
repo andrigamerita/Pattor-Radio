@@ -28,13 +28,11 @@ sox libsox-fmt-mp3
 #wget --no-check-certificate "https://files.pythonhosted.org/packages/fd/1d/e9579cf5cbc3d85e12d04b2b2d0664d87ca132712baf9bc78bf6160bd554/pydeck-0.6.0-py2.py3-none-any.whl"
 #wget --no-check-certificate "https://files.pythonhosted.org/packages/b2/97/ae3c52932853399cc748e4f3e4947659b0b487fad3a4df391557442a92db/streamlit-0.76.0-py2.py3-none-any.whl
 #wget --no-check-certificate "https://files.pythonhosted.org/packages/7d/cc/e8908bbb2921732f6851ebbbe4b77b925aab62e644ab9402f21c84fa6107/ipykernel-5.4.3-py3-none-any.whl"
-#wget --no-check-certificate ""
 
 #sudo -H pip3 install --target=$PYTHONPATH "mutagen-1.45.1-py3-none-any.whl"
 #sudo -H pip3 install --target=$PYTHONPATH "pydeck-0.6.0-py2.py3-none-any.whl"
 #sudo -H pip3 install --target=$PYTHONPATH "streamlit-0.76.0-py2.py3-none-any.whl"
 #sudo -H pip3 install --target=$PYTHONPATH "ipykernel-5.4.3-py3-none-any.whl"
-#sudo -H pip3 install --target=$PYTHONPATH ""
 
 cd ..
 rm -rf requirements/
