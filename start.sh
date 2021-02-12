@@ -12,4 +12,5 @@ SCRIPTPATH=$(realpath $0)
 SCRIPTDIR=$(dirname $SCRIPTPATH)
 cd $SCRIPTDIR
 
+mkdir Data/
 python3 ./Program/Radio.py

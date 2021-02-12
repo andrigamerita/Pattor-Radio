@@ -14,19 +14,11 @@ from random import randint
 from sys import argv
 from time import sleep
 from Include.tinytag import TinyTag
-#from mutagen.mp3 import MP3
 
 AudioFileExtensions = (".mp3", ".oga", ".ogg", ".opus", ".wav", ".flac")
 
 PlayedSongs = []
 UserConfig, PiFMConfig = {}, {}
-
-"""
-# Semi-custom random number generation to deal with the fact that python random.randint is bad.
-def RandomInt(Min, Max):
-	Factor = randint(Min*Max-Min, Max*Min+Max)
-	return int(randint(Min*Factor, Max*Factor)/Factor)
-"""
 
 # File loading with custom error handling
 def LoadFile(FilePath, FileMode):
@@ -50,6 +42,7 @@ def LoadJSON(FilePath):
 		File.close()
 		return JSON
 
+	File.close()
 	return None
 
 # Loading the program configuration files
@@ -79,6 +72,32 @@ def RandomSong(TotalSongs):
 
 	return SongIndex
 
+def SavePlayedSongs():
+	if UserConfig["Played songs list saving"] == True:
+		global PlayedSongs
+
+		with open("Data/PlayedSongs.list", "w") as PlayedSongsFile:
+			for SongIndex in PlayedSongs:
+				PlayedSongsFile.write(str(SongIndex) + "\n")
+
+def LoadPlayedSongs():
+	if UserConfig["Played songs list loading"] == True:
+		global PlayedSongs
+
+		PlayedSongsFile = LoadFile("Data/PlayedSongs.list", "r")
+
+		if PlayedSongsFile != None:
+			PlayedSongs = [int(SongIndex) for SongIndex in PlayedSongsFile.read().splitlines()]
+			PlayedSongsFile.close()
+
+		"""
+		with open("Data/PlayedSongs.list", "r") as PlayedSongsFile:
+			#PlayedSongsTemp = PlayedSongsFile.read().splitlines()
+			PlayedSongs = [int(SongIndex) for SongIndex in PlayedSongsFile.read().splitlines()]
+
+		#PlayedSongs = [int(i) for i in PlayedSongsTemp]
+		"""
+
 # Scanning of the music folder, including subfolders.
 def ScanMusic(MusicFolder):
 	SongList = []
@@ -95,25 +114,6 @@ def CleanSongList(SongList):
 			SongList.pop(SongList.index(AudioFile))
 
 	return SongList
-
-"""
-# Saving the music folder scan on a txt file, for loading it later without rescanning.
-def SaveSongList():
-	SongList = ScanMusic()
-
-	with open("SongList", "w") as SongListFile:
-		SongListFile.write(str(SongList))
-
-	return SongList
-
-# Attempt to load song folder scan saved on text file, only really useful on really slow storages.
-def LoadSongList():
-	try:
-		with open("SongList", "r") as SongListFile:
-			return SongListFile.read()
-	except:
-		return SaveSongList()
-"""
 
 # Getting meaningful information from an audio file
 def GetAudioInfo(FilePath, Info):
@@ -146,6 +146,7 @@ def PiFMRadioText(SongInfo):
 def main():
 	LoadConfig()
 	SongList = CleanSongList(ScanMusic(UserConfig["Music folder"]))
+	LoadPlayedSongs()
 
 	RadioLooping = True
 
@@ -154,32 +155,38 @@ def main():
 		while CurrentSongIndex == None:
 			CurrentSongIndex = RandomSong(len(SongList))
 
+		SavePlayedSongs()
+
 		CurrentSong = SongList[CurrentSongIndex]
-		CurrentSongInfo = {"Duration":GetAudioInfo(CurrentSong,"Duration"), "Title":GetAudioInfo(CurrentSong, "Title")}
+		CurrentSongInfo = {
+			"Duration":GetAudioInfo(CurrentSong,"Duration"),
+			"Title":GetAudioInfo(CurrentSong, "Title")
+		}
 
 		print(
 			"Now playing: " + CurrentSongInfo["Title"] +
 			" (" + str(int(CurrentSongInfo["Duration"])) + "s).\n"
 		)
 
-		system(
-			"sudo sox -t " + SoXFileType(CurrentSong) +
-			" \"" + CurrentSong + "\"" +
-			" -t wav - | sudo " + UserConfig["Path to PiFM executable"] +
-			" --audio -" +
-			" --freq " + PiFMConfig["Frequency"] +
-			" --pi " + PiFMConfig["PI-Code"] +
-			" --ps " + PiFMConfig["Program Service Name"] +
-			" --rt \"" + PiFMRadioText(CurrentSongInfo) + "\"" +
-			" --pty " + PiFMConfig["Program Type"] +
-			" --mpx " + PiFMConfig["Output MPX Power"] +
-			" --power " + PiFMConfig["GPIO Power"] +
-			" --preemph " + PiFMConfig["Preemph"] +
-			" &"
-		)
+		if UserConfig["Using PiFM"] != "" or UserConfig["Using PiFM"] != None:
+			system(
+				"sudo sox -t " + SoXFileType(CurrentSong) +
+				" \"" + CurrentSong + "\"" +
+				" -t wav - | sudo " + UserConfig["Using PiFM"] +
+				" --audio -" +
+				" --freq " + PiFMConfig["Frequency"] +
+				" --pi " + PiFMConfig["PI-Code"] +
+				" --ps " + PiFMConfig["Program Service Name"] +
+				" --rt \"" + PiFMRadioText(CurrentSongInfo) + "\"" +
+				" --pty " + PiFMConfig["Program Type"] +
+				" --mpx " + PiFMConfig["Output MPX Power"] +
+				" --power " + PiFMConfig["GPIO Power"] +
+				" --preemph " + PiFMConfig["Preemph"] +
+				" &"
+			)
 
-		sleep(CurrentSongInfo["Duration"])
-		system("sudo pkill pifm")
+			sleep(CurrentSongInfo["Duration"])
+			system("sudo pkill pifm")
 
 		print("")
 

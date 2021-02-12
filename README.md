@@ -11,6 +11,7 @@ For now, this is tested only on the Raspberry Pi 3 with Raspberry Pi OS Buster 3
 - Playback modes and options
   - Shuffling a folder of songs (including subfolders) in random order
   - Possibility of customizing the replay chance percentage for shuffle (the chance for any song that has already been played to be played again)
+  - Saving and loading of played songs list on file (used by the shuffle playing mode)
 - PiFM support for transmitting over FM radio frequencies
   - Changing of some of the default PiFM configuration options
   - Setting Radio Text based on song title
@@ -21,10 +22,10 @@ For now, this is tested only on the Raspberry Pi 3 with Raspberry Pi OS Buster 3
 - WebUI for managing everything via HTTP
 - Android and PC apps for managing simpler things and not necessarily via HTTP
 - Support for multiple separate music folders
-- Saving and loading of played songs list on file (used by the shuffle playing mode)
 - (Down)loading of songs from YouTube
 - Customization for all PiFM options
 - Reloading of configurations at every cycle without program restart
+- Support for many other common audio formats and extensions, including but not limited to: .mp2, .m4a, .m4b, MP4, .wma, and various videogame formats
 - Probably much more
 
 #### Optional and required third-party libraries and programs
