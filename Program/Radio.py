@@ -56,6 +56,9 @@ def LoadConfig():
 		print("[E] Error loading configuration files. The program will exit.")
 		exit()
 
+# Validating the configurations
+#def ValidateConfig():
+
 # Function to make sure a song would be replayed accordingly to the user-set replay chance
 def RandomSong(TotalSongs):
 	global PlayedSongs
@@ -89,14 +92,6 @@ def LoadPlayedSongs():
 		if PlayedSongsFile != None:
 			PlayedSongs = [int(SongIndex) for SongIndex in PlayedSongsFile.read().splitlines()]
 			PlayedSongsFile.close()
-
-		"""
-		with open("Data/PlayedSongs.list", "r") as PlayedSongsFile:
-			#PlayedSongsTemp = PlayedSongsFile.read().splitlines()
-			PlayedSongs = [int(SongIndex) for SongIndex in PlayedSongsFile.read().splitlines()]
-
-		#PlayedSongs = [int(i) for i in PlayedSongsTemp]
-		"""
 
 # Scanning of the music folder, including subfolders.
 def ScanMusic(MusicFolder):
@@ -133,15 +128,41 @@ def GetAudioInfo(FilePath, Info):
 
 # Read file extension of audio file, to let SoX know what type the file is
 def SoXFileType(FilePath):
-	if FilePath.endswith(AudioFileExtensions):
-		return FilePath[-3:]
+	if FilePath.endswith(AudioFileExtensions): # Spagoot, need to unspagoot soon
+		if FilePath[-3:] == "lac":
+			return "flac"
+		elif FilePath[-3:] == "pus":
+			return "opus"
+		else:
+			return FilePath[-3:]
 
 # Setting the Radio Text based on user preferences
 def PiFMRadioText(SongInfo):
+	RadioTextList = PiFMConfig["Radio Text"]
+	RadioText = ""
+
+	for Token in RadioTextList:
+		if list(RadioTextList[RadioTextList.index(Token)])[0] == "Custom Text":
+			RadioText += RadioTextList[RadioTextList.index(Token)]["Custom Text"]
+		elif list(RadioTextList[RadioTextList.index(Token)])[0] == "Song Info":
+			if RadioTextList[RadioTextList.index(Token)]["Song Info"] == "Album":
+				RadioText += SongInfo["Album"]
+			elif RadioTextList[RadioTextList.index(Token)]["Song Info"] == "Artist":
+				RadioText += SongInfo["Artist"]
+			elif RadioTextList[RadioTextList.index(Token)]["Song Info"] == "Duration":
+				RadioText += SongInfo["Duration"]
+			elif RadioTextList[RadioTextList.index(Token)]["Song Info"] == "Title":
+				RadioText += SongInfo["Title"]
+			RadioText += " "
+
+	return RadioText
+
+	"""
 	if PiFMConfig["Radio Text from song info"] == ["Title"]:
 		return SongInfo["Title"]
 	else:
 		return PiFMConfig["Static Radio Text"]
+	"""
 
 def main():
 	LoadConfig()
@@ -159,8 +180,10 @@ def main():
 
 		CurrentSong = SongList[CurrentSongIndex]
 		CurrentSongInfo = {
-			"Duration":GetAudioInfo(CurrentSong,"Duration"),
-			"Title":GetAudioInfo(CurrentSong, "Title")
+			"Album": GetAudioInfo(CurrentSong,"Album"),
+			"Artist": GetAudioInfo(CurrentSong,"Artist"),
+			"Duration": GetAudioInfo(CurrentSong,"Duration"),
+			"Title": GetAudioInfo(CurrentSong, "Title")
 		}
 
 		print(

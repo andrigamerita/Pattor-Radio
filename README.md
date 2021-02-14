@@ -14,7 +14,7 @@ For now, this is tested only on the Raspberry Pi 3 with Raspberry Pi OS Buster 3
   - Saving and loading of played songs list on file (used by the shuffle playing mode)
 - PiFM support for transmitting over FM radio frequencies
   - Changing of some of the default PiFM configuration options
-  - Setting Radio Text based on song title
+  - Setting Radio Text based on song info and static custom text
 
 ### What still needs to be done
 - Play, pause, stop, skip, and custom playlists
@@ -26,6 +26,7 @@ For now, this is tested only on the Raspberry Pi 3 with Raspberry Pi OS Buster 3
 - Customization for all PiFM options
 - Reloading of configurations at every cycle without program restart
 - Support for many other common audio formats and extensions, including but not limited to: .mp2, .m4a, .m4b, MP4, .wma, and various videogame formats
+- Converting non-ASCII text to ASCII when possible (ex. Kana/Kanji to Romaji)
 - Probably much more
 
 #### Optional and required third-party libraries and programs
