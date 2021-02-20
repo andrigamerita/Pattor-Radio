@@ -59,14 +59,14 @@ def LoadConfig():
 # Validating the configurations
 #def ValidateConfig():
 
-# Function to make sure a song would be replayed accordingly to the user-set replay chance
+# Function to make sure a song would be replayed accordingly to the user-set replay space percentage
 def RandomSong(TotalSongs):
 	global PlayedSongs
 
 	SongIndex = randint(0, TotalSongs-1)
 
 	if SongIndex in PlayedSongs:
-		if PlayedSongs.index(SongIndex) < int(TotalSongs-((TotalSongs/100)*UserConfig["Song replay chance"]))-1:
+		if PlayedSongs.index(SongIndex) < int(TotalSongs-((TotalSongs/100)*UserConfig["Song replay space percentage"]))-1:
 			return None
 		else:
 			PlayedSongs.insert(0, PlayedSongs.pop(SongIndex))
@@ -102,11 +102,16 @@ def ScanMusic(MusicFolder):
 
 	return SongList
 
-# Cleaning files with unrecognized audio extension out of the songs list.
+# Cleaning files with unrecognized audio extension out of the songs list, and removing files with extensions not allowed by the user.
 def CleanSongList(SongList):
 	for AudioFile in SongList:
 		if not AudioFile.endswith(AudioFileExtensions):
 			SongList.pop(SongList.index(AudioFile))
+
+	if UserConfig["Enabled file extensions"] != "All":
+		for AudioFile in SongList:
+			if not AudioFile.endswith(tuple(UserConfig["Enabled file extensions"])):
+				SongList.pop(SongList.index(AudioFile))
 
 	return SongList
 
@@ -157,13 +162,6 @@ def PiFMRadioText(SongInfo):
 
 	return RadioText
 
-	"""
-	if PiFMConfig["Radio Text from song info"] == ["Title"]:
-		return SongInfo["Title"]
-	else:
-		return PiFMConfig["Static Radio Text"]
-	"""
-
 def main():
 	LoadConfig()
 	SongList = CleanSongList(ScanMusic(UserConfig["Music folder"]))
@@ -212,6 +210,9 @@ def main():
 			system("sudo pkill pifm")
 
 		print("")
+
+		if UserConfig["Always refresh configuration"] == True:
+			LoadConfig()
 
 if  __name__ == "__main__":
 	main()
