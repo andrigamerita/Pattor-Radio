@@ -13,4 +13,9 @@ SCRIPTDIR=$(dirname $SCRIPTPATH)
 cd $SCRIPTDIR
 
 mkdir Data/
+
+cd Program/
+python3 ./HTTPServerWorker.py &
+
+cd ..
 python3 ./Program/Radio.py

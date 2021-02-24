@@ -9,6 +9,6 @@
 # -
 
 # Advanced logging with different levels and types (writing to console or file)
-def Logging(LogLevel, Message, LogType):
+def Logging(LogLevel, Message, LogType="Console"):
 	if LogType == "Console":
 		print("[" + LogLevel + "] " + Message)

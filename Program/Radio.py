@@ -42,7 +42,7 @@ def LoadConfig():
 	PiFMConfig = LoadJSON("Config/PiFM.config")
 
 	if UserConfig == None or PiFMConfig == None:
-		Logging("E" + "Error loading configuration files. The program will exit.", "Console")
+		Logging("E" + "Error loading configuration files. The program will exit.")
 		exit()
 
 # Validating the configurations
@@ -271,8 +271,7 @@ def Main():
 
 		Logging("I",
 			"Now playing: " + CurrentSongInfo["Title"] +
-			" (" + str(int(CurrentSongInfo["Duration"])) + "s).\n",
-			"Console"
+			" (" + str(int(CurrentSongInfo["Duration"])) + "s).\n"
 		)
 
 		if UserConfig["Using PiFM [path]"] != "" or UserConfig["Using PiFM [path]"] != None or UserConfig["Using PiFM [path]"] != False:
@@ -300,4 +299,8 @@ def Main():
 		print("")
 
 if  __name__ == "__main__":
-	Main()
+	try:
+		Main()
+
+	except KeyboardInterrupt:
+		Logging("D", "Stopping Main function.")

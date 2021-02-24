@@ -18,8 +18,8 @@ def LoadFile(FilePath, FileMode):
 			File = open(FilePath, FileMode)
 			return File
 		except:
-			Logging("E", "Unknown error loading file: " + FilePath + ".", "Console")
+			Logging("E", "Unknown error loading file: " + FilePath + ".")
 	else:
-		Logging("E", "Error loading file: " + FilePath + " does not exist.", "Console")
+		Logging("E", "Error loading file: " + FilePath + " does not exist.")
 
 	return None
