@@ -29,6 +29,7 @@ For now, this is tested only on the Raspberry Pi 3 with Raspberry Pi OS Buster 3
 - Support for many other common audio formats and extensions, including but not limited to: .mp2, .m4a, .m4b, MP4, .wma, and various videogame formats
 - Converting non-ASCII text to ASCII when possible (ex. Kana/Kanji to Romaji)
 - Complete control over chosen to-play audio file extensions
+- Scheduling broadcasts
 - Probably much more
 
 #### Optional and required third-party libraries and programs

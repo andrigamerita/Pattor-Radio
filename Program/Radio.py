@@ -9,29 +9,18 @@
 # -
 
 import json
+from datetime import datetime
 from os import walk, path, system
 from random import randint
-from sys import argv
 from time import sleep
 from Include.tinytag import TinyTag
+from Helpers.LoadingHelper import *
+from Helpers.LoggingHelper import *
 
 AudioFileExtensions = (".mp3", ".oga", ".ogg", ".opus", ".wav", ".flac")
 
 PlayedSongs = []
 UserConfig, PiFMConfig = {}, {}
-
-# File loading with custom error handling
-def LoadFile(FilePath, FileMode):
-	if path.isfile(FilePath):
-		try:
-			File = open(FilePath, FileMode)
-			return File
-		except:
-			print("[E] Unknown error loading file: " + FilePath + ".")
-	else:
-		print("[E] Error loading file: " + FilePath + " does not exist.")
-
-	return None
 
 # Loading a JSON string from file
 def LoadJSON(FilePath):
@@ -53,7 +42,7 @@ def LoadConfig():
 	PiFMConfig = LoadJSON("Config/PiFM.config")
 
 	if UserConfig == None or PiFMConfig == None:
-		print("[E] Error loading configuration files. The program will exit.")
+		Logging("E" + "Error loading configuration files. The program will exit.", "Console")
 		exit()
 
 # Validating the configurations
@@ -76,22 +65,20 @@ def RandomSong(TotalSongs):
 	return SongIndex
 
 def SavePlayedSongs():
-	if UserConfig["Played songs list saving"] == True:
-		global PlayedSongs
+	global PlayedSongs
 
-		with open("Data/PlayedSongs.list", "w") as PlayedSongsFile:
-			for SongIndex in PlayedSongs:
-				PlayedSongsFile.write(str(SongIndex) + "\n")
+	with open("Data/PlayedSongs.list", "w") as PlayedSongsFile:
+		for SongIndex in PlayedSongs:
+			PlayedSongsFile.write(str(SongIndex) + "\n")
 
 def LoadPlayedSongs():
-	if UserConfig["Played songs list loading"] == True:
-		global PlayedSongs
+	global PlayedSongs
 
-		PlayedSongsFile = LoadFile("Data/PlayedSongs.list", "r")
+	PlayedSongsFile = LoadFile("Data/PlayedSongs.list", "r")
 
-		if PlayedSongsFile != None:
-			PlayedSongs = [int(SongIndex) for SongIndex in PlayedSongsFile.read().splitlines()]
-			PlayedSongsFile.close()
+	if PlayedSongsFile != None:
+		PlayedSongs = [int(SongIndex) for SongIndex in PlayedSongsFile.read().splitlines()]
+		PlayedSongsFile.close()
 
 # Scanning of the music folder, including subfolders.
 def ScanMusic(MusicFolder):
@@ -149,6 +136,7 @@ def PiFMRadioText(SongInfo):
 	for Token in RadioTextList:
 		if list(RadioTextList[RadioTextList.index(Token)])[0] == "Custom Text":
 			RadioText += RadioTextList[RadioTextList.index(Token)]["Custom Text"]
+
 		elif list(RadioTextList[RadioTextList.index(Token)])[0] == "Song Info":
 			if RadioTextList[RadioTextList.index(Token)]["Song Info"] == "Album":
 				RadioText += SongInfo["Album"]
@@ -158,23 +146,120 @@ def PiFMRadioText(SongInfo):
 				RadioText += SongInfo["Duration"]
 			elif RadioTextList[RadioTextList.index(Token)]["Song Info"] == "Title":
 				RadioText += SongInfo["Title"]
+
 			RadioText += " "
 
 	return RadioText
 
-def main():
+"""
+# Function for the broadcast scheduling system, still in the works and barely tested, prone to bugs.
+def Schedule():
+	ScheduleCheckRate = UserConfig["Schedule checking rate"]
+
+	for ScheduleItem in UserConfig["Schedule"]:
+		ScheduleItemSplit = ScheduleItem.split("|")
+		ScheduleItemStartSplit = ScheduleItemSplit[0].split(".")
+		ScheduleItemEndSplit = ScheduleItemSplit[1].split(".")
+
+		CurrentTime = datetime.now()
+
+		if (CurrentTime.hour, CurrentTime.minute) < ScheduleItemStartSplit:
+			#if (CurrentTime.hour, CurrentTime.minute) < ScheduleItemEndSplit:
+			#sleep(ScheduleCheckRate)
+			continue
+			#else:
+		else:
+			if (CurrentTime.hour, CurrentTime.minute) < ScheduleItemEndSplit:
+				# time range good for playing
+			else:
+
+	TimeStart, TimeEnd = [], []
+
+	for Token in ScheduleList:
+		if list(ScheduleList[ScheduleList.index(Token)])[0] == "Start":
+			TimeStart += ScheduleList[ScheduleList.index(Token)]["Start"]
+		elif list(ScheduleList[ScheduleList.index(Token)])[0] == "End":
+			TimeEnd += ScheduleList[ScheduleList.index(Token)]["End"]
+
+	CurrentTimeFull = datetime.now()
+	CurrentTime = str(CurrentTimeFull.hour) + "." + str(CurrentTimeFull.minute)
+
+	for ListTime in TimeStart:
+		if CurrentTime["H"] < TimeStart[ListTime] and CurrentTime["M"] < TimeStart[ListTime]
+"""
+
+# Clears playing directions file
+def ClearPlayDirections():
+	PlayDirectionsFile = LoadFile("Data/PlayDirections", "w")
+
+	if PlayDirectionsFile != None:
+		PlayDirectionsFile.write("")
+		PlayDirectionsFile.close()
+
+# Reads directions regarding playing statuses the program will follow, read from a local file
+def ReadPlayDirections():
+	PlayDirectionsFile = LoadFile("Data/PlayDirections", "r")
+
+	if PlayDirectionsFile != None:
+		PlayDirections = PlayDirectionsFile.read()
+		PlayDirectionsFile.close()
+		return PlayDirections
+
+	return None
+
+# Function handling the program idling while a song is playing
+def SongSleep(SongDuration):
+	if UserConfig["Standalone UI enabled [Refresh rate]"] == "" or UserConfig["Standalone UI enabled [Refresh rate]"] == None or UserConfig["Standalone UI enabled [Refresh rate]"] == False:
+		sleep(SongDuration)
+
+	else:
+		SleepCycle = 0.0
+		print(SongDuration)
+
+		while SleepCycle < SongDuration/UserConfig["Standalone UI enabled [Refresh rate]"]:
+			if UserConfig["Always refresh configuration"] == True:
+				LoadConfig()
+
+			if ReadPlayDirections() == "Pause":
+				SongPaused = True
+				while SongPaused:
+					sleep(UserConfig["Standalone UI enabled [Refresh rate]"])
+					if ReadPlayDirections() != "Pause":
+						SongPaused = False
+
+			elif ReadPlayDirections() == "Skip":
+				ClearPlayDirections()
+				break
+
+			sleep(UserConfig["Standalone UI enabled [Refresh rate]"])
+			SleepCycle += 1
+			print(SleepCycle)
+
+	return "Done"
+
+# Program main function
+def Main():
 	LoadConfig()
 	SongList = CleanSongList(ScanMusic(UserConfig["Music folder"]))
-	LoadPlayedSongs()
+
+	if UserConfig["Played songs list loading"] == True:
+		LoadPlayedSongs()
 
 	RadioLooping = True
 
 	while RadioLooping:
+		if UserConfig["Always refresh configuration"] == True:
+				LoadConfig()
+
+		#if UserConfig["Schedule"] != "" or UserConfig["Schedule"] != None or UserConfig["Schedule"] != False:
+			#Schedule()
+
 		CurrentSongIndex = None
 		while CurrentSongIndex == None:
 			CurrentSongIndex = RandomSong(len(SongList))
 
-		SavePlayedSongs()
+		if UserConfig["Played songs list saving"] == True:
+			SavePlayedSongs()
 
 		CurrentSong = SongList[CurrentSongIndex]
 		CurrentSongInfo = {
@@ -184,16 +269,17 @@ def main():
 			"Title": GetAudioInfo(CurrentSong, "Title")
 		}
 
-		print(
+		Logging("I",
 			"Now playing: " + CurrentSongInfo["Title"] +
-			" (" + str(int(CurrentSongInfo["Duration"])) + "s).\n"
+			" (" + str(int(CurrentSongInfo["Duration"])) + "s).\n",
+			"Console"
 		)
 
-		if UserConfig["Using PiFM"] != "" or UserConfig["Using PiFM"] != None:
+		if UserConfig["Using PiFM [path]"] != "" or UserConfig["Using PiFM [path]"] != None or UserConfig["Using PiFM [path]"] != False:
 			system(
 				"sudo sox -t " + SoXFileType(CurrentSong) +
 				" \"" + CurrentSong + "\"" +
-				" -t wav - | sudo " + UserConfig["Using PiFM"] +
+				" -t wav - | sudo " + UserConfig["Using PiFM [path]"] +
 				" --audio -" +
 				" --freq " + PiFMConfig["Frequency"] +
 				" --pi " + PiFMConfig["PI-Code"] +
@@ -206,13 +292,12 @@ def main():
 				" &"
 			)
 
-			sleep(CurrentSongInfo["Duration"])
+		SongSleep(CurrentSongInfo["Duration"])
+
+		if UserConfig["Using PiFM [path]"] != "" or UserConfig["Using PiFM [path]"] != None or UserConfig["Using PiFM [path]"] != False:
 			system("sudo pkill pifm")
 
 		print("")
 
-		if UserConfig["Always refresh configuration"] == True:
-			LoadConfig()
-
 if  __name__ == "__main__":
-	main()
+	Main()

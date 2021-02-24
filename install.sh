@@ -19,6 +19,7 @@ python3 \
 sox libsox-fmt-mp3
 
 cd Program/
+mkdir Optional/ && cd Optional/
 git clone https://github.com/mundeeplamport/PiFM.git
 
 cd PiFM/
