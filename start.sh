@@ -14,8 +14,9 @@ cd $SCRIPTDIR
 
 mkdir Data/
 
-cd Program/
-python3 ./HTTPServerWorker.py &
-
-cd ..
+python3 ./Program/HTTPServerWorker.py & HTTPSERVERWORKERPID=$!
 python3 ./Program/Radio.py
+
+#sleep 1
+echo "[D] Killing the HTTPServerWorker."
+kill $HTTPSERVERWORKERPID

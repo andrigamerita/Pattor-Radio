@@ -18,11 +18,11 @@ For now, this is tested only on the Raspberry Pi 3 with Raspberry Pi OS Buster 3
   - Setting Radio Text based on song info and static custom text
 - Reloading of configurations at every cycle without program restart
 - Skipping songs
+- WebUI for managing everything via HTTP (still a WIP!)
 
 ### What still needs to be done
 - Play, pause, stop, and custom playlists
 - Streaming over HTTP (and Bluetooth?)
-- WebUI for managing everything via HTTP
 - Android and PC apps for managing simpler things and not necessarily via HTTP
 - Support for multiple separate music folders
 - (Down)loading of songs from YouTube
@@ -31,6 +31,7 @@ For now, this is tested only on the Raspberry Pi 3 with Raspberry Pi OS Buster 3
 - Converting non-ASCII text to ASCII when possible (ex. Kana/Kanji to Romaji)
 - Complete control over chosen to-play audio file extensions
 - Scheduling broadcasts
+- Restructuring most of the code
 - Probably much more
 
 #### Optional and required third-party libraries and programs
