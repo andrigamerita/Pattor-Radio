@@ -1,0 +1,26 @@
+{
+	"short_name": "PTTRADIO",
+	"name": "Pattor Radio WebUI",
+	"icons": [
+		{
+			"src": "/favicon.png",
+			"sizes": "16x16",
+			"type": "image/png"
+		}
+		{
+			"src": "/icon-32.png",
+			"sizes": "32x32",
+			"type": "image/png"
+		}
+		{
+			"src": "/icon-160.png",
+			"sizes": "160x160",
+			"type": "image/png"
+		}
+	],
+	"lang": "en-US",
+	"start_url": "/index.html",
+	"display": "standalone",
+	"theme_color": "#000000",
+	"background_color": "#ffffff"
+}

@@ -15,22 +15,58 @@ from sys import argv
 from Helpers.LoggingHelper import *
 from Helpers.LoadingHelper import *
 
-def Test():
-	return "<p>Goodbye, world.</p>"
+UserConfig, PiFMConfig = {}, {}
 
-# Reading contents of a text file
-def TextFileRead(FilePath):
-	File = LoadFile(FilePath, "r")
+# Loading the program configuration files.
+def LoadConfig():
+	global UserConfig, PiFMConfig
 
-	if File == None:
+	UserConfig = LoadJSON("Config/User.config")
+	PiFMConfig = LoadJSON("Config/PiFM.config")
+
+	if UserConfig == None or PiFMConfig == None:
+		Logging("E" + "Error loading configuration files. The program will exit.")
+		exit()
+
+# Detects config key types to provide a proper token to the WriteConfig function.
+def ConfigKeyToken(ConfigKeyValue):
+	if type(ConfigKeyValue) == int or type(ConfigKeyValue) == float:
+		return ""
+
+	elif type(ConfigKeyValue) == str:
+		return "\""
+
+	elif type(ConfigKeyValue) == list:
+		return "["
+
+	elif type(ConfigKeyValue) == dict:
+		return "{"
+
+	return None
+
+# Rewriting configuration file after some changes.
+def WriteConfig(ConfigFilePath, ConfigKey, ConfigKeyNewValue):
+	ConfigFile = LoadFile(ConfigFilePath, "r")
+
+	if ConfigFile == None:
 		return None
 
-	FileContent = File.read()
-	File.close()
+	ConfigFileContent = ConfigFile.read()
+	ConfigJSONContent = LoadJSON(ConfigFilePath)
 
-	return FileContent
+	ConfigFile = LoadFile(ConfigFilePath, "w")
 
-# Patching the Base HTML file with the specific page template desired
+	if ConfigFile == None:
+		return None
+
+	ConfigFile.write(ConfigFileContent.replace(
+		"\"" + ConfigKey + "\": " + ConfigKeyToken(ConfigJSONContent[ConfigKey]) + str(ConfigJSONContent[ConfigKey]),
+		"\"" + ConfigKey + "\": " + ConfigKeyToken(ConfigJSONContent[ConfigKey]) + str(ConfigKeyNewValue)
+	))
+
+	ConfigFile.close()
+
+# Patching the Base HTML file with the specific page template desired.
 def PatchHTML(TemplateFilePath):
 	TemplateFile = LoadFile(TemplateFilePath, "r")
 
@@ -50,7 +86,7 @@ def PatchHTML(TemplateFilePath):
 	except:
 		return PatchedHTML
 
-# Writing playing directions to file for the main program to read
+# Writing playing directions to file for the main program to read.
 def WritePlayDirections(PlayDirection):
 	PlayDirectionsFile = LoadFile("Data/PlayDirections", "w")
 
@@ -62,44 +98,67 @@ def WritePlayDirections(PlayDirection):
 
 	return None
 
-# Reading GET requests and responding accordingly
+# Reading GET requests and responding accordingly.
 def ReadGETParameters(RequestPath):
 	if RequestPath == "/" or RequestPath == "/index.html":
-		return PatchHTML("Program/WebUI/Templates/Main.html")
+		return PatchHTML("Program/WebUI/Templates/Main.html").encode("utf-8")
 
 	elif RequestPath == "/404" or RequestPath == "/404.html":
 		return PatchHTML("Program/WebUI/Templates/404.html")
 
+	elif RequestPath == "/manifest.json":
+		return BinaryFileRead("Program/WebUI/manifest.json")
+
+	#elif RequestPath == "/icon-160.png":
+		#return BinaryFileRead("Assets/icon-160.png")
+
+	#elif RequestPath.startswith("/favicon."):
+		#return BinaryFileRead("Assets" + RequestPath)
+
+	elif (RequestPath.startswith("/icon-") or RequestPath.startswith("/favicon.")) and RequestPath.endswith(".png"):
+		return BinaryFileRead("Assets" + RequestPath)
+
 	elif RequestPath == "/?Action=SkipSongs".lower():
-		return TextFileRead("Program/WebUI/Forms/SkipSongs.html")
+		return BinaryFileRead("Program/WebUI/Forms/SkipSongs.html")
 
 	elif RequestPath.startswith("/?RunAction=SkipSongs".lower()):
 		WritePlayDirections("Skip")
-		return TextFileRead("Program/WebUI/Forms/SkipSongs.html")
+		return BinaryFileRead("Program/WebUI/Forms/SkipSongs.html")
 
 	return None
-	#return "[HTML:Error404]"
 
-# Server main operational class
+# Setting response content type based on file extension.
+def SetContentType(RequestPath):
+	if RequestPath.endswith(".png"):
+		return "image/png"
+
+	elif RequestPath.endswith(".json"):
+		return "text/json"
+
+	return "text/html"
+
+# Server main operational class.
 class ServerClass(BaseHTTPRequestHandler):
-	def SetResponse(self, ResponseCode):
+	def SetResponse(self, ResponseCode, ContentType):
 		self.send_response(ResponseCode)
-		self.send_header("Content-type", "text/html")
+		self.send_header("Content-type", ContentType)
 		self.end_headers()
 
 	def do_GET(self):
-		ResponseText = ReadGETParameters(self.path.lower())
+		ResponseContent = ReadGETParameters(self.path.lower())
+		ContentType = SetContentType(self.path.lower())
 
-		if ResponseText == None: #"[HTML:Error404]":
-			self.SetResponse(404)
-			ResponseText = ReadGETParameters("/404.html").replace("[HTML:RequestPath]", self.path)
+		if ResponseContent == None:
+			self.SetResponse(404, "text/html")
+			ResponseContent = ReadGETParameters("/404.html").replace("[HTML:RequestPath]", self.path).encode("utf-8")
 		else:
-			self.SetResponse(200)
+			self.SetResponse(200, ContentType)
 
-		if ResponseText != None:
-			self.wfile.write(str(ResponseText).encode("utf-8"))
+		if ResponseContent != None:
+			#self.wfile.write(str(ResponseContent).encode("utf-8"))
+			self.wfile.write(ResponseContent)
 
-# Main function running the server
+# Main function running the server.
 def RunServer():
 	Server = HTTPServer(("", 9887), ServerClass)
 	Logging("D", "Starting HTTP Server.")

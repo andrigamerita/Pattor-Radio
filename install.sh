@@ -14,7 +14,7 @@ cd $SCRIPTDIR
 
 sudo apt update
 
-sudo apt install \
+sudo apt install -y \
 python3 \
 sox libsox-fmt-mp3
 

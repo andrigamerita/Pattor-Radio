@@ -22,18 +22,6 @@ AudioFileExtensions = (".mp3", ".oga", ".ogg", ".opus", ".wav", ".flac")
 PlayedSongs = []
 UserConfig, PiFMConfig = {}, {}
 
-# Loading a JSON string from file
-def LoadJSON(FilePath):
-	File = LoadFile(FilePath, "r")
-
-	if File != None:
-		JSON = json.load(File)
-		File.close()
-		return JSON
-
-	File.close()
-	return None
-
 # Loading the program configuration files
 def LoadConfig():
 	global UserConfig, PiFMConfig
@@ -44,9 +32,6 @@ def LoadConfig():
 	if UserConfig == None or PiFMConfig == None:
 		Logging("E" + "Error loading configuration files. The program will exit.")
 		exit()
-
-# Validating the configurations
-#def ValidateConfig():
 
 # Function to make sure a song would be replayed accordingly to the user-set replay space percentage
 def RandomSong(TotalSongs):
@@ -64,6 +49,7 @@ def RandomSong(TotalSongs):
 
 	return SongIndex
 
+# Saving the list of playeds songs
 def SavePlayedSongs():
 	global PlayedSongs
 
@@ -71,6 +57,7 @@ def SavePlayedSongs():
 		for SongIndex in PlayedSongs:
 			PlayedSongsFile.write(str(SongIndex) + "\n")
 
+# Loading the list of playeds songs
 def LoadPlayedSongs():
 	global PlayedSongs
 
@@ -151,45 +138,8 @@ def PiFMRadioText(SongInfo):
 
 	return RadioText
 
-"""
-# Function for the broadcast scheduling system, still in the works and barely tested, prone to bugs.
-def Schedule():
-	ScheduleCheckRate = UserConfig["Schedule checking rate"]
-
-	for ScheduleItem in UserConfig["Schedule"]:
-		ScheduleItemSplit = ScheduleItem.split("|")
-		ScheduleItemStartSplit = ScheduleItemSplit[0].split(".")
-		ScheduleItemEndSplit = ScheduleItemSplit[1].split(".")
-
-		CurrentTime = datetime.now()
-
-		if (CurrentTime.hour, CurrentTime.minute) < ScheduleItemStartSplit:
-			#if (CurrentTime.hour, CurrentTime.minute) < ScheduleItemEndSplit:
-			#sleep(ScheduleCheckRate)
-			continue
-			#else:
-		else:
-			if (CurrentTime.hour, CurrentTime.minute) < ScheduleItemEndSplit:
-				# time range good for playing
-			else:
-
-	TimeStart, TimeEnd = [], []
-
-	for Token in ScheduleList:
-		if list(ScheduleList[ScheduleList.index(Token)])[0] == "Start":
-			TimeStart += ScheduleList[ScheduleList.index(Token)]["Start"]
-		elif list(ScheduleList[ScheduleList.index(Token)])[0] == "End":
-			TimeEnd += ScheduleList[ScheduleList.index(Token)]["End"]
-
-	CurrentTimeFull = datetime.now()
-	CurrentTime = str(CurrentTimeFull.hour) + "." + str(CurrentTimeFull.minute)
-
-	for ListTime in TimeStart:
-		if CurrentTime["H"] < TimeStart[ListTime] and CurrentTime["M"] < TimeStart[ListTime]
-"""
-
 # Clears playing directions file
-def ClearPlayDirections():
+def ClearPlayDirections(): #THIS IS WRONG, the LoadFile function needs to be fixed
 	PlayDirectionsFile = LoadFile("Data/PlayDirections", "w")
 
 	if PlayDirectionsFile != None:
@@ -214,7 +164,6 @@ def SongSleep(SongDuration):
 
 	else:
 		SleepCycle = 0.0
-		print(SongDuration)
 
 		while SleepCycle < SongDuration/UserConfig["Standalone UI enabled [Refresh rate]"]:
 			if UserConfig["Always refresh configuration"] == True:
@@ -233,13 +182,14 @@ def SongSleep(SongDuration):
 
 			sleep(UserConfig["Standalone UI enabled [Refresh rate]"])
 			SleepCycle += 1
-			print(SleepCycle)
 
 	return "Done"
 
 # Program main function
 def Main():
 	LoadConfig()
+	ClearPlayDirections()
+
 	SongList = CleanSongList(ScanMusic(UserConfig["Music folder"]))
 
 	if UserConfig["Played songs list loading"] == True:
@@ -248,8 +198,8 @@ def Main():
 	RadioLooping = True
 
 	while RadioLooping:
-		if UserConfig["Always refresh configuration"] == True:
-				LoadConfig()
+		if (UserConfig["Standalone UI enabled [Refresh rate]"] == "" or UserConfig["Standalone UI enabled [Refresh rate]"] == None or UserConfig["Standalone UI enabled [Refresh rate]"] == False) and UserConfig["Always refresh configuration"] == True:
+			LoadConfig()
 
 		#if UserConfig["Schedule"] != "" or UserConfig["Schedule"] != None or UserConfig["Schedule"] != False:
 			#Schedule()
