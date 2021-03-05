@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+
+<!--
+# | Pattor Radio
+# | Goodies-packed pirate radio station on Linux
+# |
+# | Copyright (C) 2021, OctoSpacc
+# | Licensed under the AGPLv3
+-->
+
+<html lang="en">
+	<head>
+		<meta http-equiv="pragma" content="no-cache" />
+	</head>
+
+	<body style="text-align: center;">
+		<button OnClick="PlaySound()">Play</button>
+		<button OnClick="PauseSound()">Pause</button>
+		<button OnClick="ReloadPage()">Reload</button>
+
+		<script>
+			var SoundObject = new Audio("AudioStream");
+			PlaySound();
+			StatusRefresh();
+
+			function Sleep(Seconds) {
+				return new Promise(Resolve => setTimeout(Resolve, Seconds*1000))
+			}
+
+			function PlaySound() {
+				if (!SoundObject.paused) {
+					ReloadPage();
+				}
+
+				SoundObject.addEventListener('ended', PlaySound);
+				SoundObject.play();
+			}
+
+			function PauseSound() {
+				SoundObject.pause();
+			}
+
+			function ReloadPage() {
+				window.location.reload(true);
+			}
+
+			function SetSoundTime(SoundTime) {
+				SoundObject.currentTime = SoundTime;
+			}
+
+			async function StatusRefresh() {
+				while (true){
+					await Sleep([JS:RefreshRate]);
+					//let GETResponse = await fetch("URL");
+					//let GETResponseText = await GETResponse.text();
+				}
+			}
+		</script>
+	</body>
+</html>

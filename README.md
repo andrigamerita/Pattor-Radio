@@ -17,12 +17,13 @@ For now, this is tested only on the Raspberry Pi 3 with Raspberry Pi OS Buster 3
   - Changing of some of the default PiFM configuration options
   - Setting Radio Text based on song info and static custom text
 - Reloading of configurations at every cycle without program restart
-- Skipping songs
+- Skipping songs (1 at a time for now, will be improved)
 - WebUI for managing everything via HTTP (still a WIP!)
+- Audio streaming over HTTP (currently at the initial stage, very WIP, not really properly usable)
 
 ### What still needs to be done
 - Play, pause, stop, and custom playlists
-- Streaming over HTTP (and Bluetooth?)
+- Audio streaming over Bluetooth (!)
 - Android and PC apps for managing simpler things and not necessarily via HTTP
 - Support for multiple separate music folders
 - (Down)loading of songs from YouTube
@@ -34,9 +35,9 @@ For now, this is tested only on the Raspberry Pi 3 with Raspberry Pi OS Buster 3
 - Restructuring most of the code
 - Probably much more
 
-#### Optional and required third-party libraries and programs
-- [PiFM (by mundeeplamport)](https://github.com/mundeeplamport/PiFM.git), to support transmission over FM
+#### Optional and required third-party libraries and programs (some are included, others are provided through the Install.sh script)
 - [Python](https://www.python.org/), for the execution of all the main scripts
+- [tinytag (by devsnd)](https://github.com/devsnd/tinytag), to get informations from audio files
+- [PiFM (by mundeeplamport)](https://github.com/mundeeplamport/PiFM.git), to support transmission over FM
 - [SoX - Sound eXchange](http://sox.sourceforge.net/), to support playback of many audio formats
 - [libsox-fmt-mp3](https://packages.debian.org/search?keywords=libsox-fmt-mp3), to provide SoX with MP3 support
-- [tinytag (by devsnd)](https://github.com/devsnd/tinytag), to get informations from audio files

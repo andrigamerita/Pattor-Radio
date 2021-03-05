@@ -8,8 +8,13 @@
 			"type": "image/png"
 		}
 		{
-			"src": "/icon-32.png",
-			"sizes": "32x32",
+			"src": "/icon-40.png",
+			"sizes": "40x40",
+			"type": "image/png"
+		}
+		{
+			"src": "/icon-80.png",
+			"sizes": "80x80",
 			"type": "image/png"
 		}
 		{

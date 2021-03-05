@@ -13,18 +13,17 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from os.path import basename
 from sys import argv
 from Helpers.LoggingHelper import *
-from Helpers.LoadingHelper import *
+from Helpers.IOHelper import *
 
-UserConfig, PiFMConfig = {}, {}
+UserConfig = {}
 
 # Loading the program configuration files.
 def LoadConfig():
-	global UserConfig, PiFMConfig
+	global UserConfig
 
-	UserConfig = LoadJSON("Config/User.config")
-	PiFMConfig = LoadJSON("Config/PiFM.config")
+	UserConfig = LoadJSON("Config/User.json")
 
-	if UserConfig == None or PiFMConfig == None:
+	if UserConfig == None:
 		Logging("E" + "Error loading configuration files. The program will exit.")
 		exit()
 
@@ -46,35 +45,28 @@ def ConfigKeyToken(ConfigKeyValue):
 
 # Rewriting configuration file after some changes.
 def WriteConfig(ConfigFilePath, ConfigKey, ConfigKeyNewValue):
-	ConfigFile = LoadFile(ConfigFilePath, "r")
+	ConfigFileContent = TextFileRead(ConfigFilePath)
 
-	if ConfigFile == None:
+	if ConfigFileContent == None:
 		return None
 
-	ConfigFileContent = ConfigFile.read()
 	ConfigJSONContent = LoadJSON(ConfigFilePath)
 
-	ConfigFile = LoadFile(ConfigFilePath, "w")
-
-	if ConfigFile == None:
+	if TextFileWrite(
+		ConfigFilePath,
+		ConfigFileContent.replace(
+			"\"" + ConfigKey + "\": " + ConfigKeyToken(ConfigJSONContent[ConfigKey]) + str(ConfigJSONContent[ConfigKey]),
+			"\"" + ConfigKey + "\": " + ConfigKeyToken(ConfigJSONContent[ConfigKey]) + str(ConfigKeyNewValue)
+		)
+	) == None:
 		return None
-
-	ConfigFile.write(ConfigFileContent.replace(
-		"\"" + ConfigKey + "\": " + ConfigKeyToken(ConfigJSONContent[ConfigKey]) + str(ConfigJSONContent[ConfigKey]),
-		"\"" + ConfigKey + "\": " + ConfigKeyToken(ConfigJSONContent[ConfigKey]) + str(ConfigKeyNewValue)
-	))
-
-	ConfigFile.close()
 
 # Patching the Base HTML file with the specific page template desired.
 def PatchHTML(TemplateFilePath):
-	TemplateFile = LoadFile(TemplateFilePath, "r")
+	TemplateContent = TextFileRead(TemplateFilePath)
 
-	if TemplateFile == None:
+	if TemplateContent == None:
 		return None
-
-	TemplateContent = TemplateFile.read()
-	TemplateFile.close()
 
 	PatchedHTML = BaseHTML.replace("[HTML:BodyMain]", TemplateContent)
 
@@ -88,15 +80,21 @@ def PatchHTML(TemplateFilePath):
 
 # Writing playing directions to file for the main program to read.
 def WritePlayDirections(PlayDirection):
-	PlayDirectionsFile = LoadFile("Data/PlayDirections", "w")
+	PlayDirectionsFile = LoadFile("Data/PlayDirections", "r+")
 
-	if PlayDirectionsFile != None:
-		if PlayDirection == "Skip":
-			PlayDirectionsFile.write("Skip")
+	if PlayDirectionsFile == None:
+		return None
+
+	if PlayDirection == "PlayPause":
+		if PlayDirectionsFile.read() == "Pause":
+			PlayDirectionsFile.write("Play")
+		else:
+			PlayDirectionsFile.write("Pause")
+
+	else:
+		PlayDirectionsFile.write(PlayDirection)
 
 	PlayDirectionsFile.close()
-
-	return None
 
 # Reading GET requests and responding accordingly.
 def ReadGETParameters(RequestPath):
@@ -104,26 +102,39 @@ def ReadGETParameters(RequestPath):
 		return PatchHTML("Program/WebUI/Templates/Main.html").encode("utf-8")
 
 	elif RequestPath == "/404" or RequestPath == "/404.html":
-		return PatchHTML("Program/WebUI/Templates/404.html")
+		return PatchHTML("Program/WebUI/Templates/404.html").encode("utf-8")
 
 	elif RequestPath == "/manifest.json":
 		return BinaryFileRead("Program/WebUI/manifest.json")
 
-	#elif RequestPath == "/icon-160.png":
-		#return BinaryFileRead("Assets/icon-160.png")
-
-	#elif RequestPath.startswith("/favicon."):
-		#return BinaryFileRead("Assets" + RequestPath)
-
 	elif (RequestPath.startswith("/icon-") or RequestPath.startswith("/favicon.")) and RequestPath.endswith(".png"):
 		return BinaryFileRead("Assets" + RequestPath)
 
-	elif RequestPath == "/?Action=SkipSongs".lower():
+	elif RequestPath == "/AudioStream".lower():
+		LoadConfig()
+
+		if UserConfig["HTTP Streaming"] == "" or UserConfig["HTTP Streaming"] == None or UserConfig["HTTP Streaming"] == False:
+			return "".encode("utf-8")
+		else:
+			CurrentSongInfo = LoadJSON("Data/CurrentSongInfo.json")
+			return BinaryFileRead(CurrentSongInfo["File Path"])
+
+	elif RequestPath == "/httpaudio" or RequestPath == "/httpaudio.html":
+		return TextFileRead("Program/WebUI/Forms/HTTPAudio.html").replace("[JS:RefreshRate]", str(UserConfig["Standalone UI enabled [Refresh rate]"])).encode("utf-8")
+
+	elif RequestPath == "/?ActionPage=SkipSongs".lower():
 		return BinaryFileRead("Program/WebUI/Forms/SkipSongs.html")
 
 	elif RequestPath.startswith("/?RunAction=SkipSongs".lower()):
 		WritePlayDirections("Skip")
 		return BinaryFileRead("Program/WebUI/Forms/SkipSongs.html")
+
+	elif RequestPath == "/?ActionPage=PlayPauseSong".lower():
+		return BinaryFileRead("Program/WebUI/Forms/PlayPauseSong.html")
+
+	elif RequestPath.startswith("/?RunAction=PlayPauseSong".lower()):
+		WritePlayDirections("PlayPause")
+		return BinaryFileRead("Program/WebUI/Forms/PlayPauseSong.html")
 
 	return None
 
@@ -133,7 +144,10 @@ def SetContentType(RequestPath):
 		return "image/png"
 
 	elif RequestPath.endswith(".json"):
-		return "text/json"
+		return "application/json"
+
+	elif RequestPath.endswith(".txt"):
+		return "text/plain"
 
 	return "text/html"
 
@@ -171,16 +185,18 @@ def RunServer():
 		Server.server_close()
 
 if  __name__ == "__main__":
-	BaseHTMLFile = LoadFile("Program/WebUI/Base.html", "r")
+	LoadConfig()
+	if UserConfig["Standalone UI enabled [Refresh rate]"] == "" or UserConfig["Standalone UI enabled [Refresh rate]"] == None or UserConfig["Standalone UI enabled [Refresh rate]"] == False:
+		Logging("D", "WebUI is not starting as per user configuration flags.")
+		exit()
 
-	if BaseHTMLFile == None:
-		Logging("D", "Couldn't load Base HTML File. WebUI might be broken.")
+	BaseHTML = TextFileRead("Program/WebUI/Base.html")
+
+	if BaseHTML == None:
+		Logging("D", "Couldn't load contents from Base HTML File. WebUI might be broken.")
 		BaseHTML = "[HTML:BodyMain]"
-	else:
-		BaseHTML = BaseHTMLFile.read()
-		BaseHTMLFile.close()
 
-	WebUITitlesFile = LoadFile("Program/WebUI/Titles.config", "r")
+	WebUITitlesFile = LoadFile("Program/WebUI/Titles.json", "r")
 
 	if WebUITitlesFile == None:
 		Logging("D", "Couldn't load WebUI Titles File. WebUI might be broken.")

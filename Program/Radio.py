@@ -14,8 +14,8 @@ from os import walk, path, system
 from random import randint
 from time import sleep
 from Include.tinytag import TinyTag
-from Helpers.LoadingHelper import *
 from Helpers.LoggingHelper import *
+from Helpers.IOHelper import *
 
 AudioFileExtensions = (".mp3", ".oga", ".ogg", ".opus", ".wav", ".flac")
 
@@ -26,8 +26,8 @@ UserConfig, PiFMConfig = {}, {}
 def LoadConfig():
 	global UserConfig, PiFMConfig
 
-	UserConfig = LoadJSON("Config/User.config")
-	PiFMConfig = LoadJSON("Config/PiFM.config")
+	UserConfig = LoadJSON("Config/User.json")
+	PiFMConfig = LoadJSON("Config/PiFM.json")
 
 	if UserConfig == None or PiFMConfig == None:
 		Logging("E" + "Error loading configuration files. The program will exit.")
@@ -105,8 +105,8 @@ def GetAudioInfo(FilePath, Info):
 		else:
 			return AudioFile.title
 
-# Read file extension of audio file, to let SoX know what type the file is
-def SoXFileType(FilePath):
+# Read file extension of audio file, to let SoX know what type the file is and for the WebUI to work
+def GetAudioFileExtension(FilePath):
 	if FilePath.endswith(AudioFileExtensions): # Spagoot, need to unspagoot soon
 		if FilePath[-3:] == "lac":
 			return "flac"
@@ -139,7 +139,7 @@ def PiFMRadioText(SongInfo):
 	return RadioText
 
 # Clears playing directions file
-def ClearPlayDirections(): #THIS IS WRONG, the LoadFile function needs to be fixed
+def ClearPlayDirections():
 	PlayDirectionsFile = LoadFile("Data/PlayDirections", "w")
 
 	if PlayDirectionsFile != None:
@@ -183,8 +183,6 @@ def SongSleep(SongDuration):
 			sleep(UserConfig["Standalone UI enabled [Refresh rate]"])
 			SleepCycle += 1
 
-	return "Done"
-
 # Program main function
 def Main():
 	LoadConfig()
@@ -211,24 +209,30 @@ def Main():
 		if UserConfig["Played songs list saving"] == True:
 			SavePlayedSongs()
 
-		CurrentSong = SongList[CurrentSongIndex]
+		CurrentSongPath = SongList[CurrentSongIndex]
 		CurrentSongInfo = {
-			"Album": GetAudioInfo(CurrentSong,"Album"),
-			"Artist": GetAudioInfo(CurrentSong,"Artist"),
-			"Duration": GetAudioInfo(CurrentSong,"Duration"),
-			"Title": GetAudioInfo(CurrentSong, "Title")
+			"Album": GetAudioInfo(CurrentSongPath, "Album"),
+			"Artist": GetAudioInfo(CurrentSongPath, "Artist"),
+			"Duration": GetAudioInfo(CurrentSongPath, "Duration"),
+			"File Path": CurrentSongPath,
+			"File Extension": GetAudioFileExtension(CurrentSongPath),
+			"Title": GetAudioInfo(CurrentSongPath, "Title")
 		}
+
+		if UserConfig["HTTP Streaming"] == True:
+			with open("Data/CurrentSongInfo.json", "w") as CurrentSongInfoFile:
+				json.dump(CurrentSongInfo, CurrentSongInfoFile)
 
 		Logging("I",
 			"Now playing: " + CurrentSongInfo["Title"] +
 			" (" + str(int(CurrentSongInfo["Duration"])) + "s).\n"
 		)
 
-		if UserConfig["Using PiFM [path]"] != "" or UserConfig["Using PiFM [path]"] != None or UserConfig["Using PiFM [path]"] != False:
+		if UserConfig["Using PiFM [Path]"] != "" or UserConfig["Using PiFM [Path]"] != None or UserConfig["Using PiFM [Path]"] != False:
 			system(
-				"sudo sox -t " + SoXFileType(CurrentSong) +
-				" \"" + CurrentSong + "\"" +
-				" -t wav - | sudo " + UserConfig["Using PiFM [path]"] +
+				"sudo sox -t " + CurrentSongInfo["File Extension"] +
+				" \"" + CurrentSongInfo["File Path"] + "\"" +
+				" -t wav - | sudo " + UserConfig["Using PiFM [Path]"] +
 				" --audio -" +
 				" --freq " + PiFMConfig["Frequency"] +
 				" --pi " + PiFMConfig["PI-Code"] +
@@ -243,7 +247,7 @@ def Main():
 
 		SongSleep(CurrentSongInfo["Duration"])
 
-		if UserConfig["Using PiFM [path]"] != "" or UserConfig["Using PiFM [path]"] != None or UserConfig["Using PiFM [path]"] != False:
+		if UserConfig["Using PiFM [Path]"] != "" or UserConfig["Using PiFM [Path]"] != None or UserConfig["Using PiFM [Path]"] != False:
 			system("sudo pkill pifm")
 
 		print("")
