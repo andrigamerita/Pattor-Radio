@@ -94,13 +94,25 @@ def GetAudioInfo(FilePath, Info):
 	AudioFile = TinyTag.get(FilePath)
 
 	if Info == "Album":
-		return AudioFile.album
+		if AudioFile.album == "" or AudioFile.album == None:
+			return ""
+		else:
+			return AudioFile.album
+
 	elif Info == "Artist":
-		return AudioFile.artist
+		if AudioFile.artist == "" or AudioFile.artist == None:
+			return ""
+		else:
+			return AudioFile.artist
+
 	elif Info == "Duration":
-		return AudioFile.duration
+		if AudioFile.duration == "" or AudioFile.duration == None:
+			return ""
+		else:
+			return AudioFile.duration
+
 	elif Info == "Title":
-		if AudioFile.title == "":
+		if AudioFile.title == "" or AudioFile.title == None:
 			return path.basename(FilePath)
 		else:
 			return AudioFile.title
@@ -165,7 +177,7 @@ def SongSleep(SongDuration):
 	else:
 		SleepCycle = 0.0
 
-		while SleepCycle < SongDuration/UserConfig["Standalone UI enabled [Refresh rate]"]:
+		while SleepCycle < SongDuration:
 			if UserConfig["Always refresh configuration"] == True:
 				LoadConfig()
 
@@ -177,11 +189,14 @@ def SongSleep(SongDuration):
 						SongPaused = False
 
 			elif ReadPlayDirections() == "Skip":
-				ClearPlayDirections()
+				TextFileWrite("Data/PlayDirections", "0")
 				break
 
+			else:
+				TextFileWrite("Data/PlayDirections", str(SleepCycle)) # Quite a bit of time gets wasted when the direction is to Play after a Pause (??); TODO: Something should be fixed in this function, probably the fact that there's shouldn't be any sleep happening after this else condition in the current cycle of the while loop
+
 			sleep(UserConfig["Standalone UI enabled [Refresh rate]"])
-			SleepCycle += 1
+			SleepCycle += UserConfig["Standalone UI enabled [Refresh rate]"]
 
 # Program main function
 def Main():
@@ -191,16 +206,13 @@ def Main():
 	SongList = CleanSongList(ScanMusic(UserConfig["Music folder"]))
 
 	if UserConfig["Played songs list loading"] == True:
-		LoadPlayedSongs()
+		LoadPlayedSongs() # TODO: Add a way for the program to detect if the song folder's contents changed, or else problems will occour (some songs won't be played).
 
 	RadioLooping = True
 
 	while RadioLooping:
-		if (UserConfig["Standalone UI enabled [Refresh rate]"] == "" or UserConfig["Standalone UI enabled [Refresh rate]"] == None or UserConfig["Standalone UI enabled [Refresh rate]"] == False) and UserConfig["Always refresh configuration"] == True:
+		if UserConfig["Always refresh configuration"] == True:
 			LoadConfig()
-
-		#if UserConfig["Schedule"] != "" or UserConfig["Schedule"] != None or UserConfig["Schedule"] != False:
-			#Schedule()
 
 		CurrentSongIndex = None
 		while CurrentSongIndex == None:
@@ -219,7 +231,7 @@ def Main():
 			"Title": GetAudioInfo(CurrentSongPath, "Title")
 		}
 
-		if UserConfig["HTTP Streaming"] == True:
+		if UserConfig["Standalone UI enabled [Refresh rate]"] != "" or UserConfig["Standalone UI enabled [Refresh rate]"] != None or UserConfig["Standalone UI enabled [Refresh rate]"] != False:
 			with open("Data/CurrentSongInfo.json", "w") as CurrentSongInfoFile:
 				json.dump(CurrentSongInfo, CurrentSongInfoFile)
 

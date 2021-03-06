@@ -17,12 +17,12 @@ For now, this is tested only on the Raspberry Pi 3 with Raspberry Pi OS Buster 3
   - Changing of some of the default PiFM configuration options
   - Setting Radio Text based on song info and static custom text
 - Reloading of configurations at every cycle without program restart
-- Skipping songs (1 at a time for now, will be improved)
+- Skipping songs (1 at a time for now, will be improved), Playing/Pausing (only for HTTP Streaming, currently buggy)
 - WebUI for managing everything via HTTP (still a WIP!)
 - Audio streaming over HTTP (currently at the initial stage, very WIP, not really properly usable)
 
 ### What still needs to be done
-- Play, pause, stop, and custom playlists
+- Custom playlists
 - Audio streaming over Bluetooth (!)
 - Android and PC apps for managing simpler things and not necessarily via HTTP
 - Support for multiple separate music folders

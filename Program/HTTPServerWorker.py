@@ -80,20 +80,12 @@ def PatchHTML(TemplateFilePath):
 
 # Writing playing directions to file for the main program to read.
 def WritePlayDirections(PlayDirection):
-	PlayDirectionsFile = LoadFile("Data/PlayDirections", "r+")
+	PlayDirectionsFile = LoadFile("Data/PlayDirections", "w")
 
 	if PlayDirectionsFile == None:
 		return None
 
-	if PlayDirection == "PlayPause":
-		if PlayDirectionsFile.read() == "Pause":
-			PlayDirectionsFile.write("Play")
-		else:
-			PlayDirectionsFile.write("Pause")
-
-	else:
-		PlayDirectionsFile.write(PlayDirection)
-
+	PlayDirectionsFile.write(PlayDirection)
 	PlayDirectionsFile.close()
 
 # Reading GET requests and responding accordingly.
@@ -113,14 +105,25 @@ def ReadGETParameters(RequestPath):
 	elif RequestPath == "/AudioStream".lower():
 		LoadConfig()
 
-		if UserConfig["HTTP Streaming"] == "" or UserConfig["HTTP Streaming"] == None or UserConfig["HTTP Streaming"] == False:
-			return "".encode("utf-8")
-		else:
+		if UserConfig["HTTP Audio Streaming"] == True:
 			CurrentSongInfo = LoadJSON("Data/CurrentSongInfo.json")
 			return BinaryFileRead(CurrentSongInfo["File Path"])
+		else:
+			return "HTTP Audio Streaming is disabled as per user configuration.".encode("utf-8")
 
-	elif RequestPath == "/httpaudio" or RequestPath == "/httpaudio.html":
-		return TextFileRead("Program/WebUI/Forms/HTTPAudio.html").replace("[JS:RefreshRate]", str(UserConfig["Standalone UI enabled [Refresh rate]"])).encode("utf-8")
+	elif RequestPath == "/HTTPAudio".lower() or RequestPath == "/HTTPAudio.html".lower():
+		LoadConfig()
+
+		if UserConfig["HTTP Audio Streaming"] == True:
+			return TextFileRead("Program/WebUI/Forms/HTTPAudio.html").replace("[JS:RefreshRate]", str(UserConfig["Standalone UI enabled [Refresh rate]"])).encode("utf-8")
+		else:
+			return "HTTP Audio Streaming is disabled as per user configuration.".encode("utf-8")
+
+	elif RequestPath == "/CurrentSongInfo".lower() or RequestPath == "/CurrentSongInfo.json".lower():
+		return LoadJSON("Data/CurrentSongInfo.json")
+
+	elif RequestPath == "/PlayDirections".lower():
+		return BinaryFileRead("Data/PlayDirections")
 
 	elif RequestPath == "/?ActionPage=SkipSongs".lower():
 		return BinaryFileRead("Program/WebUI/Forms/SkipSongs.html")
@@ -132,8 +135,12 @@ def ReadGETParameters(RequestPath):
 	elif RequestPath == "/?ActionPage=PlayPauseSong".lower():
 		return BinaryFileRead("Program/WebUI/Forms/PlayPauseSong.html")
 
-	elif RequestPath.startswith("/?RunAction=PlayPauseSong".lower()):
-		WritePlayDirections("PlayPause")
+	elif RequestPath.startswith("/?RunAction=PauseSong".lower()):
+		WritePlayDirections("Pause")
+		return BinaryFileRead("Program/WebUI/Forms/PlayPauseSong.html")
+
+	elif RequestPath.startswith("/?RunAction=PlaySong".lower()):
+		WritePlayDirections("Play")
 		return BinaryFileRead("Program/WebUI/Forms/PlayPauseSong.html")
 
 	return None
@@ -169,7 +176,6 @@ class ServerClass(BaseHTTPRequestHandler):
 			self.SetResponse(200, ContentType)
 
 		if ResponseContent != None:
-			#self.wfile.write(str(ResponseContent).encode("utf-8"))
 			self.wfile.write(ResponseContent)
 
 # Main function running the server.

@@ -2,7 +2,7 @@
 	"Always refresh configuration": true,
 	"Enabled file extensions": "All",
 	"HTTP Port": 9887,
-	"HTTP Streaming": true,
+	"HTTP Audio Streaming": true,
 	"Logging Level": "I",
 	"Music folder": "Music",
 	"Using PiFM [Path]": "Program/Optional/PiFM/src/pifm",

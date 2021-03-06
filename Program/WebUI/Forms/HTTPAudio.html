@@ -14,45 +14,72 @@
 	</head>
 
 	<body style="text-align: center;">
-		<button OnClick="PlaySound()">Play</button>
+		<!-- <button OnClick="PlaySound()">Play</button>
 		<button OnClick="PauseSound()">Pause</button>
 		<button OnClick="ReloadPage()">Reload</button>
 
+		<br> -->
+
+		<span>Volume: </span><input type="range" min="0" max="1" step="0.01" id="VolumeBar" onchange="ChangeSoundVolume()" />
+
 		<script>
-			var SoundObject = new Audio("AudioStream");
+			const SoundObject = new Audio("AudioStream");
+			var SoundTimeSynced = false; // TODO: Investigate this better, probably this var is useless and SoundObject.paused could be instead checked to achieve the same goals; for now it will stay
+
+			ChangeSoundVolume();
 			PlaySound();
 			StatusRefresh();
+
+			SoundObject.addEventListener('ended', ReloadPage);
 
 			function Sleep(Seconds) {
 				return new Promise(Resolve => setTimeout(Resolve, Seconds*1000))
 			}
 
 			function PlaySound() {
-				if (!SoundObject.paused) {
-					ReloadPage();
+				if (SoundObject.paused) {
+					SoundObject.play();
 				}
-
-				SoundObject.addEventListener('ended', PlaySound);
-				SoundObject.play();
 			}
 
 			function PauseSound() {
-				SoundObject.pause();
+				if (!SoundObject.paused) {
+					SoundObject.pause();
+					SoundTimeSynced = false;
+				}
 			}
 
-			function ReloadPage() {
+			function ChangeSoundVolume() {
+				SoundObject.volume = document.getElementById("VolumeBar").value;
+			}
+
+			async function ReloadPage() {
+				await Sleep(0.5);
 				window.location.reload(true);
 			}
 
-			function SetSoundTime(SoundTime) {
-				SoundObject.currentTime = SoundTime;
-			}
-
 			async function StatusRefresh() {
-				while (true){
-					await Sleep([JS:RefreshRate]);
-					//let GETResponse = await fetch("URL");
-					//let GETResponseText = await GETResponse.text();
+				while (true) {
+					let PlayDirectionsResponse = await fetch("/PlayDirections");
+					let PlayDirections = await PlayDirectionsResponse.text();
+
+					if (PlayDirections == "Pause") {
+						PauseSound();
+
+					} else if (PlayDirections == "Skip" || PlayDirections == 0.0) {
+						ReloadPage();
+
+					} else {
+						if (!isNaN(PlayDirections)) {
+							if (!SoundTimeSynced) {
+								SoundObject.currentTime = PlayDirections;
+								SoundTimeSynced = true;
+							}
+							PlaySound();
+						}
+					}
+
+				await Sleep([JS:RefreshRate]);
 				}
 			}
 		</script>
