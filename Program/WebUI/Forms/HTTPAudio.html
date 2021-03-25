@@ -11,42 +11,32 @@
 <html lang="en">
 	<head>
 		<meta http-equiv="pragma" content="no-cache" />
+
+		<style>
+			.unselectable {
+				-webkit-touch-callout: none;
+				-webkit-user-select: none;
+				-khtml-user-select: none;
+				-moz-user-select: none;
+				-ms-user-select: none;
+				user-select: none;
+			}
+		</style>
 	</head>
 
-	<body style="text-align: center;">
-		<!-- <button OnClick="PlaySound()">Play</button>
-		<button OnClick="PauseSound()">Pause</button>
-		<button OnClick="ReloadPage()">Reload</button>
-
-		<br> -->
-
-		<span>Volume: </span><input type="range" min="0" max="1" step="0.01" id="VolumeBar" onchange="ChangeSoundVolume()" />
+	<body class="unselectable" style="text-align: center;">
+		<span>Volume: </span><input type="range" min="0" max="1" value="[HTML:WebUIAudioVolume]" step="0.01" id="VolumeBar" onchange="ChangeSoundVolume()" />
 
 		<script>
-			const SoundObject = new Audio("AudioStream");
-			var SoundTimeSynced = false; // TODO: Investigate this better, probably this var is useless and SoundObject.paused could be instead checked to achieve the same goals; for now it will stay
+			const SoundObject = new Audio("/AudioStream/" + Math.random());
 
 			ChangeSoundVolume();
-			PlaySound();
-			StatusRefresh();
+			ServerStatusRefresh();
 
 			SoundObject.addEventListener('ended', ReloadPage);
 
 			function Sleep(Seconds) {
-				return new Promise(Resolve => setTimeout(Resolve, Seconds*1000))
-			}
-
-			function PlaySound() {
-				if (SoundObject.paused) {
-					SoundObject.play();
-				}
-			}
-
-			function PauseSound() {
-				if (!SoundObject.paused) {
-					SoundObject.pause();
-					SoundTimeSynced = false;
-				}
+				return new Promise(Resolve => setTimeout(Resolve, Seconds*1000));
 			}
 
 			function ChangeSoundVolume() {
@@ -58,24 +48,29 @@
 				window.location.reload(true);
 			}
 
-			async function StatusRefresh() {
+			async function ServerStatusRefresh() {
 				while (true) {
-					let PlayDirectionsResponse = await fetch("/PlayDirections");
-					let PlayDirections = await PlayDirectionsResponse.text();
+					try {
+						var PlayDirectionsResponse = await fetch("/PlayDirections/" + + Math.random());
+						var PlayDirections = await PlayDirectionsResponse.text();
+					} catch(PlayDirectionsFetchError) {
+						console.log("[E] Error fetching PlayDirections.");
+					}
 
 					if (PlayDirections == "Pause") {
-						PauseSound();
+						if (!SoundObject.paused) {
+							SoundObject.pause();
+						}
 
-					} else if (PlayDirections == "Skip" || PlayDirections == 0.0) {
+					} else if (PlayDirections == "Skip" || PlayDirections < 0.0) {
 						ReloadPage();
 
 					} else {
 						if (!isNaN(PlayDirections)) {
-							if (!SoundTimeSynced) {
+							if (SoundObject.paused) {
 								SoundObject.currentTime = PlayDirections;
-								SoundTimeSynced = true;
+								SoundObject.play();
 							}
-							PlaySound();
 						}
 					}
 

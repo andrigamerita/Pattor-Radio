@@ -1,16 +1,10 @@
 {
-	"Alternative Frequencies": [],
-	"Cutoff Frequency": "",
 	"Frequency": "108.0",
-	"Frequency Deviation": "",
-	"GPIO Pin": "",
 	"GPIO Power": "7",
-	"Oscillator Errors": "",
 	"Output MPX Power": "40",
 	"PI-Code": "9887",
 	"Preemph": "eu",
 	"Program Service Name": "PTTRADIO",
 	"Program Type": "15",
-	"Radio Text": [{"Custom Text": "In riproduzione: "}, {"Song Info": "Artist"}, {"Custom Text": "- "}, {"Song Info": "Title"}],
-	"Traffic information carried": ""
+	"Radio Text": [{"Custom Text": "In riproduzione: "}, {"Song Info": "Artist"}, {"Custom Text": "- "}, {"Song Info": "Title"}]
 }

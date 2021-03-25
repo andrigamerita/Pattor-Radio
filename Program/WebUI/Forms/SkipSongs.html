@@ -1,5 +1,32 @@
-<form style="text-align: center;">
-	<input type="hidden" name="RunAction" value="SkipSongs" />
-	<!-- <input type="number" name="SongCount" value="1" min="1" required="yes" placeholder="Songs to skip" /> -->
-	<input type="submit" value="Skip Song" />
-</form>
+<!DOCTYPE html>
+
+<!--
+# | Pattor Radio
+# | Goodies-packed pirate radio station on Linux
+# |
+# | Copyright (C) 2021, OctoSpacc
+# | Licensed under the AGPLv3
+-->
+
+<html lang="en">
+	<head>
+		<style>
+			.unselectable {
+				-webkit-touch-callout: none;
+				-webkit-user-select: none;
+				-khtml-user-select: none;
+				-moz-user-select: none;
+				-ms-user-select: none;
+				user-select: none;
+			}
+		</style>
+	</head>
+
+	<body class="unselectable">
+		<form style="text-align: center;">
+			<input type="hidden" name="RunAction" value="SkipSongs" />
+			<!-- <input type="number" name="SongCount" value="1" min="1" required="yes" placeholder="Songs to skip" /> -->
+			<input type="submit" value="Skip Song" />
+		</form>
+	</body>
+</html>

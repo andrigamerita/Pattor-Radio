@@ -171,7 +171,7 @@ def ReadPlayDirections():
 
 # Function handling the program idling while a song is playing
 def SongSleep(SongDuration):
-	if UserConfig["Standalone UI enabled [Refresh rate]"] == "" or UserConfig["Standalone UI enabled [Refresh rate]"] == None or UserConfig["Standalone UI enabled [Refresh rate]"] == False:
+	if UserConfig["Remote UI enabled [Refresh rate]"] == "" or UserConfig["Remote UI enabled [Refresh rate]"] == None or UserConfig["Remote UI enabled [Refresh rate]"] == False:
 		sleep(SongDuration)
 
 	else:
@@ -184,19 +184,19 @@ def SongSleep(SongDuration):
 			if ReadPlayDirections() == "Pause":
 				SongPaused = True
 				while SongPaused:
-					sleep(UserConfig["Standalone UI enabled [Refresh rate]"])
+					sleep(UserConfig["Remote UI enabled [Refresh rate]"])
 					if ReadPlayDirections() != "Pause":
 						SongPaused = False
 
 			elif ReadPlayDirections() == "Skip":
-				TextFileWrite("Data/PlayDirections", "0")
+				sleep(UserConfig["Remote UI enabled [Refresh rate]"])
+				TextFileWrite("Data/PlayDirections", "")
 				break
 
 			else:
-				TextFileWrite("Data/PlayDirections", str(SleepCycle)) # Quite a bit of time gets wasted when the direction is to Play after a Pause (??); TODO: Something should be fixed in this function, probably the fact that there's shouldn't be any sleep happening after this else condition in the current cycle of the while loop
-
-			sleep(UserConfig["Standalone UI enabled [Refresh rate]"])
-			SleepCycle += UserConfig["Standalone UI enabled [Refresh rate]"]
+				TextFileWrite("Data/PlayDirections", str(SleepCycle))
+				SleepCycle += UserConfig["Remote UI enabled [Refresh rate]"]
+				sleep(UserConfig["Remote UI enabled [Refresh rate]"])
 
 # Program main function
 def Main():
@@ -231,7 +231,7 @@ def Main():
 			"Title": GetAudioInfo(CurrentSongPath, "Title")
 		}
 
-		if UserConfig["Standalone UI enabled [Refresh rate]"] != "" or UserConfig["Standalone UI enabled [Refresh rate]"] != None or UserConfig["Standalone UI enabled [Refresh rate]"] != False:
+		if UserConfig["Remote UI enabled [Refresh rate]"] != "" and UserConfig["Remote UI enabled [Refresh rate]"] != None and UserConfig["Remote UI enabled [Refresh rate]"] != False:
 			with open("Data/CurrentSongInfo.json", "w") as CurrentSongInfoFile:
 				json.dump(CurrentSongInfo, CurrentSongInfoFile)
 
@@ -240,11 +240,11 @@ def Main():
 			" (" + str(int(CurrentSongInfo["Duration"])) + "s).\n"
 		)
 
-		if UserConfig["Using PiFM [Path]"] != "" or UserConfig["Using PiFM [Path]"] != None or UserConfig["Using PiFM [Path]"] != False:
+		if UserConfig["PiFM Enabled"]:
 			system(
 				"sudo sox -t " + CurrentSongInfo["File Extension"] +
 				" \"" + CurrentSongInfo["File Path"] + "\"" +
-				" -t wav - | sudo " + UserConfig["Using PiFM [Path]"] +
+				" -t wav - | sudo " + UserConfig["PiFM Path"] +
 				" --audio -" +
 				" --freq " + PiFMConfig["Frequency"] +
 				" --pi " + PiFMConfig["PI-Code"] +
@@ -259,7 +259,7 @@ def Main():
 
 		SongSleep(CurrentSongInfo["Duration"])
 
-		if UserConfig["Using PiFM [Path]"] != "" or UserConfig["Using PiFM [Path]"] != None or UserConfig["Using PiFM [Path]"] != False:
+		if UserConfig["PiFM Enabled"]:
 			system("sudo pkill pifm")
 
 		print("")
@@ -269,4 +269,4 @@ if  __name__ == "__main__":
 		Main()
 
 	except KeyboardInterrupt:
-		Logging("D", "Stopping Main function.")
+		Logging("D", "Stopping Radio Server.")

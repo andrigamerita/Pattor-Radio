@@ -1,0 +1,22 @@
+/*
+# | Pattor Radio
+# | Goodies-packed pirate radio station on Linux
+# |
+# | Copyright (C) 2021, OctoSpacc
+# | Licensed under the AGPLv3
+*/
+
+@import url("ubuntu/font.css");
+
+html {
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
+body {
+	text-align: center;
+}

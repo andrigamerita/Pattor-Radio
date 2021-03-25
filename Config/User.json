@@ -3,13 +3,12 @@
 	"Enabled file extensions": "All",
 	"HTTP Port": 9887,
 	"HTTP Audio Streaming": true,
-	"Logging Level": "I",
 	"Music folder": "Music",
-	"Using PiFM [Path]": "Program/Optional/PiFM/src/pifm",
-	"Played songs list loading": true,
-	"Played songs list saving": true,
-	"Schedule": ["20.00|23.00"],
-	"Schedule checking rate": 20,
-	"Standalone UI enabled [Refresh rate]": 2.0,
-	"Song replay space percentage": 5
+	"PiFM Enabled": false,
+	"PiFM Path": "Program/Optional/PiFM/src/pifm",
+	"Played songs list loading": false,
+	"Played songs list saving": false,
+	"Remote UI enabled [Refresh rate]": 2.0,
+	"Song replay space percentage": 5,
+	"WebUI Streaming Default Volume": 0.3
 }

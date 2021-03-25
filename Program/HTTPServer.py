@@ -29,7 +29,7 @@ def LoadConfig():
 
 # Detects config key types to provide a proper token to the WriteConfig function.
 def ConfigKeyToken(ConfigKeyValue):
-	if type(ConfigKeyValue) == int or type(ConfigKeyValue) == float:
+	if type(ConfigKeyValue) == int or type(ConfigKeyValue) == float or type(ConfigKeyValue) == bool:
 		return ""
 
 	elif type(ConfigKeyValue) == str:
@@ -43,6 +43,12 @@ def ConfigKeyToken(ConfigKeyValue):
 
 	return None
 
+def ConfigKeyValueToString(ConfigKeyValue):
+	if type(ConfigKeyValue) == bool:
+		return str(ConfigKeyValue).lower()
+	else:
+		return str(ConfigKeyValue)
+
 # Rewriting configuration file after some changes.
 def WriteConfig(ConfigFilePath, ConfigKey, ConfigKeyNewValue):
 	ConfigFileContent = TextFileRead(ConfigFilePath)
@@ -52,14 +58,13 @@ def WriteConfig(ConfigFilePath, ConfigKey, ConfigKeyNewValue):
 
 	ConfigJSONContent = LoadJSON(ConfigFilePath)
 
-	if TextFileWrite(
+	TextFileWrite(
 		ConfigFilePath,
 		ConfigFileContent.replace(
-			"\"" + ConfigKey + "\": " + ConfigKeyToken(ConfigJSONContent[ConfigKey]) + str(ConfigJSONContent[ConfigKey]),
-			"\"" + ConfigKey + "\": " + ConfigKeyToken(ConfigJSONContent[ConfigKey]) + str(ConfigKeyNewValue)
+			"\"" + ConfigKey + "\": " + ConfigKeyToken(ConfigJSONContent[ConfigKey]) + ConfigKeyValueToString(ConfigJSONContent[ConfigKey]),
+			"\"" + ConfigKey + "\": " + ConfigKeyToken(ConfigKeyNewValue) + ConfigKeyValueToString(ConfigKeyNewValue)
 		)
-	) == None:
-		return None
+	)
 
 # Patching the Base HTML file with the specific page template desired.
 def PatchHTML(TemplateFilePath):
@@ -96,13 +101,17 @@ def ReadGETParameters(RequestPath):
 	elif RequestPath == "/404" or RequestPath == "/404.html":
 		return PatchHTML("Program/WebUI/Templates/404.html").encode("utf-8")
 
-	elif RequestPath == "/manifest.json":
+	elif RequestPath == "/manifest.json" or RequestPath == "manifest.webmanifest":
 		return BinaryFileRead("Program/WebUI/manifest.json")
 
 	elif (RequestPath.startswith("/icon-") or RequestPath.startswith("/favicon.")) and RequestPath.endswith(".png"):
 		return BinaryFileRead("Assets" + RequestPath)
 
-	elif RequestPath == "/AudioStream".lower():
+	elif (RequestPath.startswith("/Style/".lower())):
+		if RequestPath.endswith((".css", ".woff2", ".txt")) and not ".." in RequestPath:
+			return BinaryFileRead("Program/WebUI" + RequestPath)
+
+	elif RequestPath.startswith("/AudioStream".lower()):
 		LoadConfig()
 
 		if UserConfig["HTTP Audio Streaming"] == True:
@@ -115,14 +124,14 @@ def ReadGETParameters(RequestPath):
 		LoadConfig()
 
 		if UserConfig["HTTP Audio Streaming"] == True:
-			return TextFileRead("Program/WebUI/Forms/HTTPAudio.html").replace("[JS:RefreshRate]", str(UserConfig["Standalone UI enabled [Refresh rate]"])).encode("utf-8")
+			return TextFileRead("Program/WebUI/Forms/HTTPAudio.html").replace("[JS:RefreshRate]", str(UserConfig["Remote UI enabled [Refresh rate]"])).replace("[HTML:WebUIAudioVolume]", str(UserConfig["WebUI Streaming Default Volume"])).encode("utf-8")
 		else:
 			return "HTTP Audio Streaming is disabled as per user configuration.".encode("utf-8")
 
 	elif RequestPath == "/CurrentSongInfo".lower() or RequestPath == "/CurrentSongInfo.json".lower():
 		return LoadJSON("Data/CurrentSongInfo.json")
 
-	elif RequestPath == "/PlayDirections".lower():
+	elif RequestPath.startswith("/PlayDirections".lower()):
 		return BinaryFileRead("Data/PlayDirections")
 
 	elif RequestPath == "/?ActionPage=SkipSongs".lower():
@@ -143,6 +152,22 @@ def ReadGETParameters(RequestPath):
 		WritePlayDirections("Play")
 		return BinaryFileRead("Program/WebUI/Forms/PlayPauseSong.html")
 
+	elif RequestPath == "/?ActionPage=ConfigManager".lower():
+		if UserConfig["PiFM Enabled"]:
+			return TextFileRead("Program/WebUI/Forms/ConfigManager.html").replace("[HTML:ConfigEnableDisablePiFM]", "Disable").encode("utf-8")
+		else:
+			return TextFileRead("Program/WebUI/Forms/ConfigManager.html").replace("[HTML:ConfigEnableDisablePiFM]", "Enable").encode("utf-8")
+
+	elif RequestPath.startswith("/?RunAction=EnableDisablePiFM".lower()):
+		if UserConfig["PiFM Enabled"]:
+			UserConfig["PiFM Enabled"] = False
+			WriteConfig("Config/User.json", "PiFM Enabled", False)
+			return TextFileRead("Program/WebUI/Forms/ConfigManager.html").replace("[HTML:ConfigEnableDisablePiFM]", "Enable").encode("utf-8")
+		else:
+			UserConfig["PiFM Enabled"] = True
+			WriteConfig("Config/User.json", "PiFM Enabled", True)
+			return TextFileRead("Program/WebUI/Forms/ConfigManager.html").replace("[HTML:ConfigEnableDisablePiFM]", "Disable").encode("utf-8")
+
 	return None
 
 # Setting response content type based on file extension.
@@ -156,13 +181,30 @@ def SetContentType(RequestPath):
 	elif RequestPath.endswith(".txt"):
 		return "text/plain"
 
+	elif RequestPath.endswith(".css"):
+		return "text/css"
+
+	elif RequestPath.endswith(".woff2"):
+		return "font/woff2"
+
+	elif RequestPath.startswith("/AudioStream/".lower()):
+		CurrentSongInfo = LoadJSON("Data/CurrentSongInfo.json")
+		if CurrentSongInfo["File Path"].endswith(".wav"):
+			return "audio/vnd.wav"
+		elif CurrentSongInfo["File Path"].endswith(".mp3"):
+			return "audio/mpeg"
+		elif CurrentSongInfo["File Path"].endswith(".ogg"):
+			return "audio/ogg"
+
 	return "text/html"
 
 # Server main operational class.
 class ServerClass(BaseHTTPRequestHandler):
-	def SetResponse(self, ResponseCode, ContentType):
+	def SetResponse(self, ResponseCode, ContentType, NoCache=False):
 		self.send_response(ResponseCode)
 		self.send_header("Content-type", ContentType)
+		if NoCache:
+			self.send_header("Pragma", "no-cache")
 		self.end_headers()
 
 	def do_GET(self):
@@ -171,9 +213,12 @@ class ServerClass(BaseHTTPRequestHandler):
 
 		if ResponseContent == None:
 			self.SetResponse(404, "text/html")
-			ResponseContent = ReadGETParameters("/404.html").replace("[HTML:RequestPath]", self.path).encode("utf-8")
+			ResponseContent = PatchHTML("Program/WebUI/Templates/404.html").replace("[HTML:RequestPath]", self.path).encode("utf-8")
 		else:
-			self.SetResponse(200, ContentType)
+			if self.path == "/HTTPAudio".lower() or self.path == "/HTTPAudio.html".lower() or self.path == "/AudioStream".lower():
+				self.SetResponse(200, ContentType, NoCache=True)
+			else:
+				self.SetResponse(200, ContentType)
 
 		if ResponseContent != None:
 			self.wfile.write(ResponseContent)
@@ -192,7 +237,7 @@ def RunServer():
 
 if  __name__ == "__main__":
 	LoadConfig()
-	if UserConfig["Standalone UI enabled [Refresh rate]"] == "" or UserConfig["Standalone UI enabled [Refresh rate]"] == None or UserConfig["Standalone UI enabled [Refresh rate]"] == False:
+	if UserConfig["Remote UI enabled [Refresh rate]"] == "" or UserConfig["Remote UI enabled [Refresh rate]"] == None or UserConfig["Remote UI enabled [Refresh rate]"] == False:
 		Logging("D", "WebUI is not starting as per user configuration flags.")
 		exit()
 

@@ -14,7 +14,7 @@ cd $SCRIPTDIR
 
 mkdir Data/
 
-python3 ./Program/HTTPServerWorker.py & HTTPSERVERWORKERPID=$!
+python3 ./Program/HTTPServer.py & HTTPSERVERWORKERPID=$!
 python3 ./Program/Radio.py
 
 #sleep 1
