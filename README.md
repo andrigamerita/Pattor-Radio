@@ -37,6 +37,7 @@ For now, this is tested only on the Raspberry Pi 3 with Raspberry Pi OS Buster 3
 
 #### Optional and required third-party libraries and programs (some are included, others are provided through the Install.sh script)
 - [Python](https://www.python.org/), for the execution of all the main scripts
+- [multithread-http-server](https://github.com/0rtis/multithread-http-server) to handle HTTP requests in Python decently
 - [tinytag (by devsnd)](https://github.com/devsnd/tinytag), to get informations from audio files
 - [PiFM (by mundeeplamport)](https://github.com/mundeeplamport/PiFM.git), to support transmission over FM
 - [SoX - Sound eXchange](http://sox.sourceforge.net/), to support playback of many audio formats

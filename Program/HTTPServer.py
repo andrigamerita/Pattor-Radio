@@ -9,9 +9,10 @@
 # -
 
 import json
-from http.server import BaseHTTPRequestHandler, HTTPServer
 from os.path import basename
 from sys import argv
+from http.server import BaseHTTPRequestHandler
+from Include.multithread_http_server import MultiThreadHttpServer
 from Helpers.LoggingHelper import *
 from Helpers.IOHelper import *
 
@@ -101,7 +102,7 @@ def ReadGETParameters(RequestPath):
 	elif RequestPath == "/404" or RequestPath == "/404.html":
 		return PatchHTML("Program/WebUI/Templates/404.html").encode("utf-8")
 
-	elif RequestPath == "/manifest.json" or RequestPath == "manifest.webmanifest":
+	elif RequestPath == "/manifest.json" or RequestPath == "/manifest.webmanifest":
 		return BinaryFileRead("Program/WebUI/manifest.json")
 
 	elif (RequestPath.startswith("/icon-") or RequestPath.startswith("/favicon.")) and RequestPath.endswith(".png"):
@@ -225,15 +226,15 @@ class ServerClass(BaseHTTPRequestHandler):
 
 # Main function running the server.
 def RunServer():
-	Server = HTTPServer(("", 9887), ServerClass)
-	Logging("D", "Starting HTTP Server.")
+	Server = MultiThreadHttpServer(("", UserConfig["HTTP Port"]), 16, ServerClass)
+	Logging("D", "Starting HTTP Server on port " + str(UserConfig["HTTP Port"]))
 
 	try:
-		Server.serve_forever()
+		Server.start()
 
 	except KeyboardInterrupt:
 		Logging("D", "Stopping HTTP Server.")
-		Server.server_close()
+		Server.stop()
 
 if  __name__ == "__main__":
 	LoadConfig()

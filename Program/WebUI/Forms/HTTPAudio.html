@@ -49,32 +49,40 @@
 			}
 
 			async function ServerStatusRefresh() {
+				var PassedPlayDirections = 0.0;
+
 				while (true) {
 					try {
-						var PlayDirectionsResponse = await fetch("/PlayDirections/" + + Math.random());
+						var PlayDirectionsResponse = await fetch("/PlayDirections/" + Math.random());
 						var PlayDirections = await PlayDirectionsResponse.text();
 					} catch(PlayDirectionsFetchError) {
 						console.log("[E] Error fetching PlayDirections.");
 					}
 
-					if (PlayDirections == "Pause") {
-						if (!SoundObject.paused) {
-							SoundObject.pause();
-						}
+					console.log("[D] PlayDirections: " + PlayDirections);
+					console.log("[D] PassedPlayDirections: " + PassedPlayDirections);
 
-					} else if (PlayDirections == "Skip" || PlayDirections < 0.0) {
+					if (PlayDirections == "Pause" && !SoundObject.paused) {
+						SoundObject.pause();
+
+					} else if (PlayDirections == "Skip" || parseFloat(PlayDirections) < 0.0 || parseFloat(PassedPlayDirections) > parseFloat(PlayDirections)) {
 						ReloadPage();
 
 					} else {
-						if (!isNaN(PlayDirections)) {
-							if (SoundObject.paused) {
-								SoundObject.currentTime = PlayDirections;
-								SoundObject.play();
-							}
+						if (!isNaN(PlayDirections) && SoundObject.paused) {
+							await Sleep(0.5);
+							SoundObject.currentTime = PlayDirections;
+							SoundObject.play();
 						}
 					}
 
-				await Sleep([JS:RefreshRate]);
+					if (!isNaN(PlayDirections)) {
+						PassedPlayDirections = PlayDirections;
+					}
+
+					console.log("[D] PassedPlayDirections: " + PassedPlayDirections);
+
+					await Sleep([JS:RefreshRate]);
 				}
 			}
 		</script>
