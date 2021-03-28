@@ -200,6 +200,8 @@ def SongSleep(SongDuration):
 
 # Program main function
 def Main():
+	ThisCycleUsePiFM = False
+
 	LoadConfig()
 	ClearPlayDirections()
 
@@ -208,9 +210,7 @@ def Main():
 	if UserConfig["Played songs list loading"] == True:
 		LoadPlayedSongs() # TODO: Add a way for the program to detect if the song folder's contents changed, or else problems will occour (some songs won't be played).
 
-	RadioLooping = True
-
-	while RadioLooping:
+	while True:
 		if UserConfig["Always refresh configuration"] == True:
 			LoadConfig()
 
@@ -221,15 +221,18 @@ def Main():
 		if UserConfig["Played songs list saving"] == True:
 			SavePlayedSongs()
 
-		CurrentSongPath = SongList[CurrentSongIndex]
 		CurrentSongInfo = {
-			"Album": GetAudioInfo(CurrentSongPath, "Album"),
-			"Artist": GetAudioInfo(CurrentSongPath, "Artist"),
-			"Duration": GetAudioInfo(CurrentSongPath, "Duration"),
-			"File Path": CurrentSongPath,
-			"File Extension": GetAudioFileExtension(CurrentSongPath),
-			"Title": GetAudioInfo(CurrentSongPath, "Title")
+			"Album": GetAudioInfo(SongList[CurrentSongIndex], "Album"),
+			"Artist": GetAudioInfo(SongList[CurrentSongIndex], "Artist"),
+			"Duration": GetAudioInfo(SongList[CurrentSongIndex], "Duration"),
+			"File Path": SongList[CurrentSongIndex],
+			"File Extension": GetAudioFileExtension(SongList[CurrentSongIndex]),
+			"Title": GetAudioInfo(SongList[CurrentSongIndex], "Title")
 		}
+
+		if CurrentSongInfo["Duration"] == "":
+			Logging("I", "Duration not found in current song (" + CurrentSongInfo["File Path"] + "); Is the format supported?")
+			continue
 
 		if UserConfig["Remote UI enabled [Refresh rate]"] != "" and UserConfig["Remote UI enabled [Refresh rate]"] != None and UserConfig["Remote UI enabled [Refresh rate]"] != False:
 			with open("Data/CurrentSongInfo.json", "w") as CurrentSongInfoFile:
@@ -241,6 +244,8 @@ def Main():
 		)
 
 		if UserConfig["PiFM Enabled"]:
+			ThisCycleUsePiFM = True
+
 			system(
 				"sudo sox -t " + CurrentSongInfo["File Extension"] +
 				" \"" + CurrentSongInfo["File Path"] + "\"" +
@@ -259,8 +264,9 @@ def Main():
 
 		SongSleep(CurrentSongInfo["Duration"])
 
-		if UserConfig["PiFM Enabled"]:
+		if ThisCycleUsePiFM:
 			system("sudo pkill pifm")
+			ThisCycleUsePiFM = False
 
 		print("")
 

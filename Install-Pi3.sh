@@ -8,9 +8,9 @@
 # | Licensed under the AGPLv3
 # -
 
-SCRIPTPATH=$(realpath $0)
-SCRIPTDIR=$(dirname $SCRIPTPATH)
-cd $SCRIPTDIR
+ScriptPath=$(realpath $0)
+ScriptDir=$(dirname $ScriptPath)
+cd $ScriptDir
 
 sudo apt update
 

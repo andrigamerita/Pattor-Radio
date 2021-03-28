@@ -99,6 +99,9 @@ def ReadGETParameters(RequestPath):
 	if RequestPath == "/" or RequestPath == "/index.html":
 		return PatchHTML("Program/WebUI/Templates/Main.html").encode("utf-8")
 
+	elif RequestPath == "/mobile" or RequestPath == "/mobile.html":
+		return PatchHTML("Program/WebUI/Templates/MainMobile.html").encode("utf-8")
+
 	elif RequestPath == "/404" or RequestPath == "/404.html":
 		return PatchHTML("Program/WebUI/Templates/404.html").encode("utf-8")
 
@@ -108,7 +111,7 @@ def ReadGETParameters(RequestPath):
 	elif (RequestPath.startswith("/icon-") or RequestPath.startswith("/favicon.")) and RequestPath.endswith(".png"):
 		return BinaryFileRead("Assets" + RequestPath)
 
-	elif (RequestPath.startswith("/Style/".lower())):
+	elif (RequestPath.startswith("/style/")):
 		if RequestPath.endswith((".css", ".woff2", ".txt")) and not ".." in RequestPath:
 			return BinaryFileRead("Program/WebUI" + RequestPath)
 
@@ -135,23 +138,32 @@ def ReadGETParameters(RequestPath):
 	elif RequestPath.startswith("/PlayDirections".lower()):
 		return BinaryFileRead("Data/PlayDirections")
 
+	elif RequestPath == "/?ActionPage=RemoteControls".lower():
+		return BinaryFileRead("Program/WebUI/Forms/RemoteControls.html")
+
 	elif RequestPath == "/?ActionPage=SkipSongs".lower():
 		return BinaryFileRead("Program/WebUI/Forms/SkipSongs.html")
 
 	elif RequestPath.startswith("/?RunAction=SkipSongs".lower()):
 		WritePlayDirections("Skip")
-		return BinaryFileRead("Program/WebUI/Forms/SkipSongs.html")
+		#return BinaryFileRead("Program/WebUI/Forms/SkipSongs.html")
+		return BinaryFileRead("Program/WebUI/Forms/RemoteControls.html")
 
 	elif RequestPath == "/?ActionPage=PlayPauseSong".lower():
 		return BinaryFileRead("Program/WebUI/Forms/PlayPauseSong.html")
 
+	#elif RequestPath.startswith("/?RunAction=PlayPauseSong".lower()):
+		#return BinaryFileRead("Program/WebUI/Forms/PlayPauseSong.html")
+
 	elif RequestPath.startswith("/?RunAction=PauseSong".lower()):
 		WritePlayDirections("Pause")
-		return BinaryFileRead("Program/WebUI/Forms/PlayPauseSong.html")
+		#return BinaryFileRead("Program/WebUI/Forms/PlayPauseSong.html")
+		return BinaryFileRead("Program/WebUI/Forms/RemoteControls.html")
 
 	elif RequestPath.startswith("/?RunAction=PlaySong".lower()):
 		WritePlayDirections("Play")
-		return BinaryFileRead("Program/WebUI/Forms/PlayPauseSong.html")
+		#return BinaryFileRead("Program/WebUI/Forms/PlayPauseSong.html")
+		return BinaryFileRead("Program/WebUI/Forms/RemoteControls.html")
 
 	elif RequestPath == "/?ActionPage=ConfigManager".lower():
 		if UserConfig["PiFM Enabled"]:

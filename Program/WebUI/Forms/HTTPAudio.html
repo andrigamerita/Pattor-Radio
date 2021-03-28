@@ -25,15 +25,30 @@
 	</head>
 
 	<body class="unselectable" style="text-align: center;">
+		<button id="AudioInteractGimmick" style="display: none; visibility: hidden;">Activate Streaming</button>
+
 		<span>Volume: </span><input type="range" min="0" max="1" value="[HTML:WebUIAudioVolume]" step="0.01" id="VolumeBar" onchange="ChangeSoundVolume()" />
 
 		<script>
-			const SoundObject = new Audio("/AudioStream/" + Math.random());
+			var SoundObject;
 
+			RefreshSound();
 			ChangeSoundVolume();
 			ServerStatusRefresh();
 
 			SoundObject.addEventListener('ended', ReloadPage);
+
+			function PlaySound() {
+				try {
+					SoundObject.play();
+					document.getElementById("AudioInteractGimmick").style.display = "none";
+					document.getElementById("AudioInteractGimmick").style.display = "hidden";
+				} catch(PlayError) {
+					console.log("[E] Error playing sound.")
+					document.getElementById("AudioInteractGimmick").style.display = "block";
+					document.getElementById("AudioInteractGimmick").style.display = "visible";
+				}
+			}
 
 			function Sleep(Seconds) {
 				return new Promise(Resolve => setTimeout(Resolve, Seconds*1000));
@@ -41,6 +56,14 @@
 
 			function ChangeSoundVolume() {
 				SoundObject.volume = document.getElementById("VolumeBar").value;
+			}
+
+			async function RefreshSound() {
+				try {
+					SoundObject.pause();
+				} catch(PauseError) {}
+
+				SoundObject = new Audio("/AudioStream/" + Math.random());
 			}
 
 			async function ReloadPage() {
@@ -59,28 +82,26 @@
 						console.log("[E] Error fetching PlayDirections.");
 					}
 
-					console.log("[D] PlayDirections: " + PlayDirections);
-					console.log("[D] PassedPlayDirections: " + PassedPlayDirections);
+					//console.log("[D] PlayDirections: " + PlayDirections);
+					//console.log("[D] PassedPlayDirections: " + PassedPlayDirections);
 
 					if (PlayDirections == "Pause" && !SoundObject.paused) {
 						SoundObject.pause();
 
 					} else if (PlayDirections == "Skip" || parseFloat(PlayDirections) < 0.0 || parseFloat(PassedPlayDirections) > parseFloat(PlayDirections)) {
-						ReloadPage();
+						RefreshSound();
 
-					} else {
-						if (!isNaN(PlayDirections) && SoundObject.paused) {
-							await Sleep(0.5);
-							SoundObject.currentTime = PlayDirections;
-							SoundObject.play();
-						}
+					} else if (!isNaN(PlayDirections) && SoundObject.paused) {
+						await Sleep(0.5);
+						SoundObject.currentTime = PlayDirections;
+						PlaySound();
 					}
 
 					if (!isNaN(PlayDirections)) {
 						PassedPlayDirections = PlayDirections;
 					}
 
-					console.log("[D] PassedPlayDirections: " + PassedPlayDirections);
+					//console.log("[D] PassedPlayDirections: " + PassedPlayDirections);
 
 					await Sleep([JS:RefreshRate]);
 				}

@@ -7,17 +7,17 @@
 			"src": "favicon.png",
 			"sizes": "16x16",
 			"type": "image/png"
-		}
+		},
 		{
 			"src": "icon-40.png",
 			"sizes": "40x40",
 			"type": "image/png"
-		}
+		},
 		{
 			"src": "icon-80.png",
 			"sizes": "80x80",
 			"type": "image/png"
-		}
+		},
 		{
 			"src": "icon-160.png",
 			"sizes": "160x160",

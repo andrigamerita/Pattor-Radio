@@ -8,15 +8,14 @@
 # | Licensed under the AGPLv3
 # -
 
-SCRIPTPATH=$(realpath $0)
-SCRIPTDIR=$(dirname $SCRIPTPATH)
-cd $SCRIPTDIR
+ScriptPath=$(realpath $0)
+ScriptDir=$(dirname $ScriptPath)
+cd $ScriptDir
 
-mkdir Data/
+mkdir Data/ 2>/dev/null
 
-python3 ./Program/HTTPServer.py & HTTPSERVERWORKERPID=$!
+python3 ./Program/HTTPServer.py & HTTPServerPID=$!
 python3 ./Program/Radio.py
 
-#sleep 1
-echo "[D] Killing the HTTPServerWorker."
-kill $HTTPSERVERWORKERPID
+echo "[D] Killing the HTTPServer."
+kill $HTTPServerPID

@@ -18,8 +18,8 @@ For now, this is tested only on the Raspberry Pi 3 with Raspberry Pi OS Buster 3
   - Setting Radio Text based on song info and static custom text
 - Reloading of configurations at every cycle without program restart
 - Skipping songs (1 at a time for now, will be improved), Playing/Pausing (only for HTTP Streaming, currently buggy)
-- WebUI for managing everything via HTTP (still a WIP!)
-- Audio streaming over HTTP (currently at the initial stage, very WIP, not really properly usable)
+- WebUI for managing everything via HTTP (WIP and basic, but already stable)
+- Audio streaming over HTTP
 
 ### What still needs to be done
 - Custom playlists
