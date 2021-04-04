@@ -11,17 +11,7 @@
 <html lang="en">
 	<head>
 		<meta http-equiv="pragma" content="no-cache" />
-
-		<style>
-			.unselectable {
-				-webkit-touch-callout: none;
-				-webkit-user-select: none;
-				-khtml-user-select: none;
-				-moz-user-select: none;
-				-ms-user-select: none;
-				user-select: none;
-			}
-		</style>
+		<link href="/Style/Light.css" rel="stylesheet" />
 	</head>
 
 	<body class="unselectable" style="text-align: center;">
@@ -35,8 +25,6 @@
 			RefreshSound();
 			ChangeSoundVolume();
 			ServerStatusRefresh();
-
-			SoundObject.addEventListener('ended', ReloadPage);
 
 			function PlaySound() {
 				try {
@@ -82,17 +70,14 @@
 						console.log("[E] Error fetching PlayDirections.");
 					}
 
-					//console.log("[D] PlayDirections: " + PlayDirections);
-					//console.log("[D] PassedPlayDirections: " + PassedPlayDirections);
-
 					if (PlayDirections == "Pause" && !SoundObject.paused) {
 						SoundObject.pause();
 
 					} else if (PlayDirections == "Skip" || parseFloat(PlayDirections) < 0.0 || parseFloat(PassedPlayDirections) > parseFloat(PlayDirections)) {
 						RefreshSound();
+						ChangeSoundVolume();
 
 					} else if (!isNaN(PlayDirections) && SoundObject.paused) {
-						await Sleep(0.5);
 						SoundObject.currentTime = PlayDirections;
 						PlaySound();
 					}
@@ -100,8 +85,6 @@
 					if (!isNaN(PlayDirections)) {
 						PassedPlayDirections = PlayDirections;
 					}
-
-					//console.log("[D] PassedPlayDirections: " + PassedPlayDirections);
 
 					await Sleep([JS:RefreshRate]);
 				}

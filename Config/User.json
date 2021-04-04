@@ -1,7 +1,7 @@
 {
 	"Always refresh configuration": true,
 	"Enabled file extensions": "All",
-	"HTTP Port": 9887,
+	"HTTP Address": ["", 9887],
 	"HTTP Audio Streaming": true,
 	"Music folder": "Music",
 	"PiFM Enabled": false,
